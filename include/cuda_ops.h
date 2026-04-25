@@ -86,4 +86,12 @@ void cuda_cross_entropy_loss(const float* logits, const int* targets,
 void cuda_sgd_update(float* param, const float* grad,
                       size_t size, float learning_rate,
                       cudaStream_t stream = 0);
+
+void cuda_flatten(const float* input, float* output,
+                   size_t batch, size_t C, size_t H, size_t W,
+                   cudaStream_t stream = 0);
+
+void cuda_flatten_backward(const float* grad_flat, float* grad_input,
+                            size_t batch, size_t C, size_t H, size_t W,
+                            cudaStream_t stream = 0);
 }
