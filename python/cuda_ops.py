@@ -60,6 +60,54 @@ class CUDAOps:
         ]
         self.lib.cuda_flatten_backward.restype = None
 
+        # MatMul
+        self.lib.cuda_matmul_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t
+        ]
+        self.lib.cuda_matmul_f32.restype = None
+
+        self.lib.cuda_matmul_backward_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t
+        ]
+        self.lib.cuda_matmul_backward_f32.restype = None
+
+        # BiasAdd
+        self.lib.cuda_bias_add_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_size_t, ctypes.c_size_t
+        ]
+        self.lib.cuda_bias_add_f32.restype = None
+
+        self.lib.cuda_bias_add_backward_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_size_t, ctypes.c_size_t
+        ]
+        self.lib.cuda_bias_add_backward_f32.restype = None
+
+        # ReLU
+        self.lib.cuda_relu_f32.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+        self.lib.cuda_relu_f32.restype = None
+
+        self.lib.cuda_relu_backward_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t
+        ]
+        self.lib.cuda_relu_backward_f32.restype = None
+
+        # Softmax
+        self.lib.cuda_softmax_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_size_t
+        ]
+        self.lib.cuda_softmax_f32.restype = None
+
+        self.lib.cuda_softmax_backward_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_size_t, ctypes.c_size_t
+        ]
+        self.lib.cuda_softmax_backward_f32.restype = None
+
     def alloc(self, size):
         """Allocate GPU memory for size float32 elements."""
         return self.lib.cuda_alloc(size * 4)  # float32 = 4 bytes
@@ -158,6 +206,90 @@ class CUDAOps:
         self.lib.cuda_flatten_backward(grad_flat_ptr, grad_input_ptr, batch, C, H, W, None)
         return grad_input_ptr
 
+    def matmul(self, A_ptr, B_ptr, M, N, K, output_ptr=None):
+        """Pure CUDA matmul: C = A @ B.
+
+        Args:
+            A_ptr: GPU pointer to A [M, K]
+            B_ptr: GPU pointer to B [K, N]
+            M, N, K: matrix dimensions
+            output_ptr: optional pre-allocated output pointer
+
+        Returns:
+            C_ptr: GPU pointer to result [M, N]
+        """
+        if output_ptr is None:
+            output_ptr = self.alloc(M * N)
+        self.lib.cuda_matmul_f32(A_ptr, B_ptr, output_ptr, M, N, K)
+        return output_ptr
+
+    def matmul_backward(self, grad_C_ptr, A_ptr, B_ptr, M, N, K,
+                        grad_A_ptr=None, grad_B_ptr=None):
+        """Pure CUDA matmul backward.
+
+        Returns:
+            grad_A_ptr, grad_B_ptr
+        """
+        if grad_A_ptr is None:
+            grad_A_ptr = self.alloc(M * K)
+        if grad_B_ptr is None:
+            grad_B_ptr = self.alloc(K * N)
+        self.lib.cuda_matmul_backward_f32(
+            grad_C_ptr, A_ptr, B_ptr, grad_A_ptr, grad_B_ptr, M, N, K)
+        return grad_A_ptr, grad_B_ptr
+
+    def bias_add(self, input_ptr, bias_ptr, rows, cols, output_ptr=None):
+        """Pure CUDA bias add: output = input + bias.
+
+        Args:
+            input_ptr: GPU pointer to input [rows, cols]
+            bias_ptr: GPU pointer to bias [cols]
+            rows, cols: dimensions
+
+        Returns:
+            output_ptr
+        """
+        if output_ptr is None:
+            output_ptr = self.alloc(rows * cols)
+        self.lib.cuda_bias_add_f32(input_ptr, bias_ptr, output_ptr, rows, cols)
+        return output_ptr
+
+    def bias_add_backward(self, grad_out_ptr, rows, cols,
+                          grad_input_ptr=None, grad_bias_ptr=None):
+        """Pure CUDA bias add backward."""
+        if grad_input_ptr is None:
+            grad_input_ptr = self.alloc(rows * cols)
+        if grad_bias_ptr is None:
+            grad_bias_ptr = self.alloc(cols)
+        self.lib.cuda_bias_add_backward_f32(
+            grad_out_ptr, grad_input_ptr, grad_bias_ptr, rows, cols)
+        return grad_input_ptr, grad_bias_ptr
+
+    def relu(self, data_ptr, size):
+        """Inplace ReLU activation."""
+        self.lib.cuda_relu_f32(data_ptr, size)
+
+    def relu_backward(self, grad_out_ptr, forward_input_ptr, grad_in_ptr, size):
+        """ReLU backward."""
+        self.lib.cuda_relu_backward_f32(
+            grad_out_ptr, forward_input_ptr, grad_in_ptr, size)
+
+    def softmax(self, input_ptr, batch, classes, output_ptr=None):
+        """Pure CUDA softmax."""
+        if output_ptr is None:
+            output_ptr = self.alloc(batch * classes)
+        self.lib.cuda_softmax_f32(input_ptr, output_ptr, batch, classes)
+        return output_ptr
+
+    def softmax_backward(self, grad_out_ptr, forward_output_ptr, batch, classes,
+                         grad_in_ptr=None):
+        """Softmax backward."""
+        if grad_in_ptr is None:
+            grad_in_ptr = self.alloc(batch * classes)
+        self.lib.cuda_softmax_backward_f32(
+            grad_out_ptr, forward_output_ptr, grad_in_ptr, batch, classes)
+        return grad_in_ptr
+
 
 def test_binding():
     print("Testing CUDA Operators Python binding...")
@@ -228,6 +360,137 @@ def test_binding():
     ops.free(input_ptr)
     ops.free(flat_ptr)
     print("   Flatten: PASSED")
+
+    # Test matmul
+    print("\n5. Testing matmul...")
+    M, K, N = 4, 3, 5
+    A = np.random.randn(M, K).astype(np.float32)
+    B = np.random.randn(K, N).astype(np.float32)
+
+    A_ptr = ops.to_device(A)
+    B_ptr = ops.to_device(B)
+
+    C_ptr = ops.matmul(A_ptr, B_ptr, M, N, K)
+    C_result = ops.to_host(C_ptr, (M, N))
+
+    expected = A @ B
+    assert np.allclose(C_result, expected, atol=1e-5), "Matmul test failed!"
+    print(f"   Matmul shape: ({M}, {K}) @ ({K}, {N}) = ({M}, {N})")
+
+    # Test matmul backward
+    grad_C = np.random.randn(M, N).astype(np.float32)
+    grad_C_ptr = ops.to_device(grad_C)
+    grad_A_ptr, grad_B_ptr = ops.matmul_backward(grad_C_ptr, A_ptr, B_ptr, M, N, K)
+
+    grad_A_result = ops.to_host(grad_A_ptr, (M, K))
+    grad_B_result = ops.to_host(grad_B_ptr, (K, N))
+
+    # Verify gradients: dL/dA = dL/dC @ B.T, dL/dB = A.T @ dL/dC
+    expected_grad_A = grad_C @ B.T
+    expected_grad_B = A.T @ grad_C
+    assert np.allclose(grad_A_result, expected_grad_A, atol=1e-5), "Matmul backward grad_A failed!"
+    assert np.allclose(grad_B_result, expected_grad_B, atol=1e-5), "Matmul backward grad_B failed!"
+
+    ops.free(A_ptr)
+    ops.free(B_ptr)
+    ops.free(C_ptr)
+    ops.free(grad_C_ptr)
+    ops.free(grad_A_ptr)
+    ops.free(grad_B_ptr)
+    print("   Matmul and backward: PASSED")
+
+    # Test bias_add
+    print("\n6. Testing bias_add...")
+    rows, cols = 8, 4
+    input_data = np.random.randn(rows, cols).astype(np.float32)
+    bias = np.random.randn(cols).astype(np.float32)
+
+    input_ptr = ops.to_device(input_data)
+    bias_ptr = ops.to_device(bias)
+
+    output_ptr = ops.bias_add(input_ptr, bias_ptr, rows, cols)
+    output_result = ops.to_host(output_ptr, (rows, cols))
+
+    expected = input_data + bias
+    assert np.allclose(output_result, expected, atol=1e-5), "Bias add test failed!"
+
+    # Test bias_add backward
+    grad_out = np.random.randn(rows, cols).astype(np.float32)
+    grad_out_ptr = ops.to_device(grad_out)
+    grad_input_ptr, grad_bias_ptr = ops.bias_add_backward(grad_out_ptr, rows, cols)
+
+    grad_input_result = ops.to_host(grad_input_ptr, (rows, cols))
+    grad_bias_result = ops.to_host(grad_bias_ptr, (cols,))
+
+    expected_grad_input = grad_out
+    expected_grad_bias = grad_out.sum(axis=0)
+    assert np.allclose(grad_input_result, expected_grad_input, atol=1e-5), "Bias add backward grad_input failed!"
+    assert np.allclose(grad_bias_result, expected_grad_bias, atol=1e-5), "Bias add backward grad_bias failed!"
+
+    ops.free(input_ptr)
+    ops.free(bias_ptr)
+    ops.free(output_ptr)
+    ops.free(grad_out_ptr)
+    ops.free(grad_input_ptr)
+    ops.free(grad_bias_ptr)
+    print("   Bias add and backward: PASSED")
+
+    # Test relu
+    print("\n7. Testing relu...")
+    size = 100
+    relu_input = np.random.randn(size).astype(np.float32)
+    relu_ptr = ops.to_device(relu_input.copy())  # Copy to avoid modifying original
+
+    ops.relu(relu_ptr, size)
+    relu_result = ops.to_host(relu_ptr, (size,))
+
+    expected_relu = np.maximum(relu_input, 0)
+    assert np.allclose(relu_result, expected_relu, atol=1e-5), "ReLU test failed!"
+
+    # Test relu backward
+    grad_relu = np.random.randn(size).astype(np.float32)
+    grad_relu_ptr = ops.to_device(grad_relu)
+    grad_in_ptr = ops.alloc(size)
+
+    ops.relu_backward(grad_relu_ptr, relu_ptr, grad_in_ptr, size)
+    grad_in_result = ops.to_host(grad_in_ptr, (size,))
+
+    expected_grad_in = grad_relu * (relu_input > 0).astype(np.float32)
+    assert np.allclose(grad_in_result, expected_grad_in, atol=1e-5), "ReLU backward test failed!"
+
+    ops.free(relu_ptr)
+    ops.free(grad_relu_ptr)
+    ops.free(grad_in_ptr)
+    print("   ReLU and backward: PASSED")
+
+    # Test softmax
+    print("\n8. Testing softmax...")
+    batch, classes = 4, 10
+    softmax_input = np.random.randn(batch, classes).astype(np.float32)
+    softmax_ptr = ops.to_device(softmax_input)
+
+    softmax_out_ptr = ops.softmax(softmax_ptr, batch, classes)
+    softmax_result = ops.to_host(softmax_out_ptr, (batch, classes))
+
+    # Verify softmax: each row sums to 1, all values in (0, 1)
+    row_sums = softmax_result.sum(axis=1)
+    assert np.allclose(row_sums, 1.0, atol=1e-5), "Softmax rows don't sum to 1!"
+    assert np.all(softmax_result >= 0) and np.all(softmax_result <= 1), "Softmax values out of range!"
+
+    # Test softmax backward
+    grad_softmax = np.random.randn(batch, classes).astype(np.float32)
+    grad_softmax_ptr = ops.to_device(grad_softmax)
+    grad_soft_in_ptr = ops.softmax_backward(grad_softmax_ptr, softmax_out_ptr, batch, classes)
+
+    grad_soft_in_result = ops.to_host(grad_soft_in_ptr, (batch, classes))
+    assert grad_soft_in_result.shape == (batch, classes), "Softmax backward shape mismatch!"
+    assert not np.any(np.isnan(grad_soft_in_result)), "Softmax backward contains NaN!"
+
+    ops.free(softmax_ptr)
+    ops.free(softmax_out_ptr)
+    ops.free(grad_softmax_ptr)
+    ops.free(grad_soft_in_ptr)
+    print("   Softmax and backward: PASSED")
 
     print("\n" + "="*50)
     print("All binding tests passed!")
