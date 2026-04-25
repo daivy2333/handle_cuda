@@ -32,3 +32,17 @@ add_subdirectory(scripts)
 add_executable(benchmark src/benchmark.cpp)
 target_link_libraries(benchmark cuda_ops)
 target_include_directories(benchmark PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+# Shared library for Python binding
+add_library(cuda_ops_shared SHARED
+    src/cuda_ops_export.cu
+    src/cross_entropy.cu
+    src/sgd_update.cu
+    src/flatten.cu
+)
+target_include_directories(cuda_ops_shared PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(cuda_ops_shared CUDA::cudart)
+set_target_properties(cuda_ops_shared PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
+    POSITION_INDEPENDENT_CODE ON
+)
