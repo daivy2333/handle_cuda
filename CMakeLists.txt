@@ -36,6 +36,10 @@ target_include_directories(benchmark PRIVATE ${CMAKE_SOURCE_DIR}/include)
 # Shared library for Python binding
 add_library(cuda_ops_shared SHARED
     src/cuda_ops_export.cu
+    src/matmul.cu
+    src/relu.cu
+    src/bias_add.cu
+    src/softmax.cu
     src/cross_entropy.cu
     src/sgd_update.cu
     src/flatten.cu
