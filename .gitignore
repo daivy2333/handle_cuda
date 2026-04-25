@@ -1,3 +1,5 @@
 /.pir-cache
 /data/
 /.worktrees/
+/build/
+/.archive/
