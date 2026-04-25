@@ -32,6 +32,9 @@ struct Pool2dDesc {
 void cuda_matmul(const float* A, const float* B, float* C, const MatMulDesc& desc, cudaStream_t stream = 0);
 
 void cuda_bias_add(const float* input, const float* bias, float* output, size_t rows, size_t cols, cudaStream_t stream = 0);
+void cuda_bias_add_backward(const float* grad_out, float* grad_input,
+                             float* grad_bias, size_t rows, size_t cols,
+                             cudaStream_t stream = 0);
 
 void cuda_relu(float* data, size_t size, cudaStream_t stream = 0);
 void cuda_relu_backward(const float* grad_out, const float* forward_input, float* grad_in, size_t size, cudaStream_t stream = 0);
