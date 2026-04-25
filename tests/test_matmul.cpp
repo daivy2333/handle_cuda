@@ -129,3 +129,61 @@ TEST_F(MatMulTest, LargeMatrix) {
 
     EXPECT_LT(max_rel_err, 1e-4f);
 }
+
+TEST_F(MatMulTest, BackwardPass) {
+    size_t M = 64, N = 32, K = 64;
+
+    auto A = generate_random(M * K);
+    auto B = generate_random(K * N);
+    auto grad_C = generate_random(M * N);
+
+    // Reference backward: grad_A = grad_C @ B^T, grad_B = A^T @ grad_C
+    std::vector<float> grad_A_ref(M * K, 0.0f);
+    std::vector<float> grad_B_ref(K * N, 0.0f);
+
+    for (size_t i = 0; i < M; ++i) {
+        for (size_t k = 0; k < K; ++k) {
+            float sum = 0.0f;
+            for (size_t j = 0; j < N; ++j) {
+                sum += grad_C[i * N + j] * B[k * N + j];
+            }
+            grad_A_ref[i * K + k] = sum;
+        }
+    }
+
+    for (size_t k = 0; k < K; ++k) {
+        for (size_t j = 0; j < N; ++j) {
+            float sum = 0.0f;
+            for (size_t i = 0; i < M; ++i) {
+                sum += A[i * K + k] * grad_C[i * N + j];
+            }
+            grad_B_ref[k * N + j] = sum;
+        }
+    }
+
+    CudaBuffer d_A(M * K), d_B(K * N), d_grad_C(M * N);
+    CudaBuffer d_grad_A(M * K), d_grad_B(K * N);
+
+    host_to_device_async(d_A.data, A.data(), M * K);
+    host_to_device_async(d_B.data, B.data(), K * N);
+    host_to_device_async(d_grad_C.data, grad_C.data(), M * N);
+
+    MatMulDesc desc{M, N, K, false, false};
+    cuda_matmul_backward(d_grad_C.data, d_A.data, d_B.data,
+                         d_grad_A.data, d_grad_B.data, desc);
+
+    std::vector<float> grad_A(M * K), grad_B(K * N);
+    device_to_host(d_grad_A.data, grad_A.data(), M * K);
+    device_to_host(d_grad_B.data, grad_B.data(), K * N);
+
+    float max_err_A = 0.0f, max_err_B = 0.0f;
+    for (size_t i = 0; i < M * K; ++i) {
+        max_err_A = std::max(max_err_A, relative_error(grad_A[i], grad_A_ref[i]));
+    }
+    for (size_t i = 0; i < K * N; ++i) {
+        max_err_B = std::max(max_err_B, relative_error(grad_B[i], grad_B_ref[i]));
+    }
+
+    EXPECT_LT(max_err_A, 1e-4f);
+    EXPECT_LT(max_err_B, 1e-4f);
+}
