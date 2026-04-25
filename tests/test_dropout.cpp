@@ -96,3 +96,43 @@ TEST_F(DropoutTest, BackwardPass) {
         }
     }
 }
+
+TEST_F(DropoutTest, ZeroDropoutProb) {
+    size_t size = 1000;
+    float dropout_prob = 0.0f;
+
+    auto input = generate_random(size);
+    CudaBuffer d_input(size), d_output(size), d_mask(size);
+    host_to_device_async(d_input.data, input.data(), size);
+
+    cuda_dropout(d_input.data, d_output.data, d_mask.data, size, dropout_prob, true);
+
+    std::vector<float> output(size), mask(size);
+    device_to_host(d_output.data, output.data(), size);
+    device_to_host(d_mask.data, mask.data(), size);
+
+    for (size_t i = 0; i < size; ++i) {
+        EXPECT_FLOAT_EQ(output[i], input[i]);
+        EXPECT_FLOAT_EQ(mask[i], 1.0f);
+    }
+}
+
+TEST_F(DropoutTest, FullDropoutProb) {
+    size_t size = 1000;
+    float dropout_prob = 1.0f;
+
+    auto input = generate_random(size);
+    CudaBuffer d_input(size), d_output(size), d_mask(size);
+    host_to_device_async(d_input.data, input.data(), size);
+
+    cuda_dropout(d_input.data, d_output.data, d_mask.data, size, dropout_prob, true);
+
+    std::vector<float> output(size), mask(size);
+    device_to_host(d_output.data, output.data(), size);
+    device_to_host(d_mask.data, mask.data(), size);
+
+    for (size_t i = 0; i < size; ++i) {
+        EXPECT_FLOAT_EQ(output[i], 0.0f);
+        EXPECT_FLOAT_EQ(mask[i], 0.0f);
+    }
+}

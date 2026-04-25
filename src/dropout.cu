@@ -2,6 +2,7 @@
 #include "cuda_util.h"
 #include <random>
 #include <chrono>
+#include <thread>
 
 namespace {
 
@@ -18,11 +19,11 @@ __global__ void dropout_kernel(const float* input, float* output, float* mask,
             state ^= state >> 27;
             float rand_val = (state * 0x2545F4914F6CDD1Dull >> 32) / 4294967296.0f;
 
-            float scale = 1.0f / (1.0f - dropout_prob);
-            if (rand_val < dropout_prob) {
+            if (rand_val < dropout_prob || dropout_prob >= 1.0f) {
                 output[idx] = 0.0f;
                 mask[idx] = 0.0f;
             } else {
+                float scale = 1.0f / (1.0f - dropout_prob);
                 output[idx] = input[idx] * scale;
                 mask[idx] = scale;
             }
@@ -42,7 +43,9 @@ __global__ void dropout_backward_kernel(const float* grad_out, const float* mask
 }
 
 unsigned long long generate_seed() {
-    static std::mt19937_64 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    auto now = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    auto thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+    thread_local std::mt19937_64 rng(static_cast<unsigned long long>(now) ^ thread_id);
     return rng();
 }
 
