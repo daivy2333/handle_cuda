@@ -1,0 +1,5 @@
+add_test( Conv2dTest.Basic /home/daivy/projects/handle_cuda/build/bin/test_conv2d [==[--gtest_filter=Conv2dTest.Basic]==] --gtest_also_run_disabled_tests)
+set_tests_properties( Conv2dTest.Basic PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( Conv2dTest.NoPadding /home/daivy/projects/handle_cuda/build/bin/test_conv2d [==[--gtest_filter=Conv2dTest.NoPadding]==] --gtest_also_run_disabled_tests)
+set_tests_properties( Conv2dTest.NoPadding PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( test_conv2d_TESTS Conv2dTest.Basic Conv2dTest.NoPadding)

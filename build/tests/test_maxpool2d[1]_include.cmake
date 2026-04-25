@@ -1,0 +1,5 @@
+if(EXISTS "/home/daivy/projects/handle_cuda/build/tests/test_maxpool2d[1]_tests.cmake")
+  include("/home/daivy/projects/handle_cuda/build/tests/test_maxpool2d[1]_tests.cmake")
+else()
+  add_test(test_maxpool2d_NOT_BUILT test_maxpool2d_NOT_BUILT)
+endif()

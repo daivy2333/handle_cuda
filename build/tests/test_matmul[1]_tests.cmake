@@ -1,0 +1,7 @@
+add_test( MatMulTest.SimpleMatMul /home/daivy/projects/handle_cuda/build/bin/test_matmul [==[--gtest_filter=MatMulTest.SimpleMatMul]==] --gtest_also_run_disabled_tests)
+set_tests_properties( MatMulTest.SimpleMatMul PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( MatMulTest.TransposeA /home/daivy/projects/handle_cuda/build/bin/test_matmul [==[--gtest_filter=MatMulTest.TransposeA]==] --gtest_also_run_disabled_tests)
+set_tests_properties( MatMulTest.TransposeA PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( MatMulTest.LargeMatrix /home/daivy/projects/handle_cuda/build/bin/test_matmul [==[--gtest_filter=MatMulTest.LargeMatrix]==] --gtest_also_run_disabled_tests)
+set_tests_properties( MatMulTest.LargeMatrix PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( test_matmul_TESTS MatMulTest.SimpleMatMul MatMulTest.TransposeA MatMulTest.LargeMatrix)

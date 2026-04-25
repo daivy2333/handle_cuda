@@ -1,0 +1,7 @@
+add_test( BiasAddTest.Basic /home/daivy/projects/handle_cuda/build/bin/test_bias_add [==[--gtest_filter=BiasAddTest.Basic]==] --gtest_also_run_disabled_tests)
+set_tests_properties( BiasAddTest.Basic PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( BiasAddTest.SingleRow /home/daivy/projects/handle_cuda/build/bin/test_bias_add [==[--gtest_filter=BiasAddTest.SingleRow]==] --gtest_also_run_disabled_tests)
+set_tests_properties( BiasAddTest.SingleRow PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( BiasAddTest.LargeMatrix /home/daivy/projects/handle_cuda/build/bin/test_bias_add [==[--gtest_filter=BiasAddTest.LargeMatrix]==] --gtest_also_run_disabled_tests)
+set_tests_properties( BiasAddTest.LargeMatrix PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( test_bias_add_TESTS BiasAddTest.Basic BiasAddTest.SingleRow BiasAddTest.LargeMatrix)

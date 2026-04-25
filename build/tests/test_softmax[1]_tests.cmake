@@ -1,0 +1,7 @@
+add_test( SoftmaxTest.Basic /home/daivy/projects/handle_cuda/build/bin/test_softmax [==[--gtest_filter=SoftmaxTest.Basic]==] --gtest_also_run_disabled_tests)
+set_tests_properties( SoftmaxTest.Basic PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( SoftmaxTest.SumToOne /home/daivy/projects/handle_cuda/build/bin/test_softmax [==[--gtest_filter=SoftmaxTest.SumToOne]==] --gtest_also_run_disabled_tests)
+set_tests_properties( SoftmaxTest.SumToOne PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( SoftmaxTest.NonNegative /home/daivy/projects/handle_cuda/build/bin/test_softmax [==[--gtest_filter=SoftmaxTest.NonNegative]==] --gtest_also_run_disabled_tests)
+set_tests_properties( SoftmaxTest.NonNegative PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( test_softmax_TESTS SoftmaxTest.Basic SoftmaxTest.SumToOne SoftmaxTest.NonNegative)
