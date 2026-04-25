@@ -8,6 +8,9 @@ set(CUDA_OPS_SOURCES
     ${CMAKE_SOURCE_DIR}/src/sigmoid.cu
     ${CMAKE_SOURCE_DIR}/src/tanh.cu
     ${CMAKE_SOURCE_DIR}/src/dropout.cu
+    ${CMAKE_SOURCE_DIR}/src/cross_entropy.cu
+    ${CMAKE_SOURCE_DIR}/src/sgd_update.cu
+    ${CMAKE_SOURCE_DIR}/src/flatten.cu
 )
 
 add_library(cuda_ops STATIC ${CUDA_OPS_SOURCES})
@@ -50,6 +53,18 @@ add_executable(test_dropout test_dropout.cpp)
 target_link_libraries(test_dropout cuda_ops GTest::gtest GTest::gtest_main pthread)
 target_include_directories(test_dropout PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
+add_executable(test_cross_entropy test_cross_entropy.cpp)
+target_link_libraries(test_cross_entropy cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_cross_entropy PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+add_executable(test_sgd_update test_sgd_update.cpp)
+target_link_libraries(test_sgd_update cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_sgd_update PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+add_executable(test_flatten test_flatten.cpp)
+target_link_libraries(test_flatten cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_flatten PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
 include(GoogleTest)
 gtest_discover_tests(test_matmul)
 gtest_discover_tests(test_relu)
@@ -60,3 +75,6 @@ gtest_discover_tests(test_maxpool2d)
 gtest_discover_tests(test_sigmoid)
 gtest_discover_tests(test_tanh)
 gtest_discover_tests(test_dropout)
+gtest_discover_tests(test_cross_entropy)
+gtest_discover_tests(test_sgd_update)
+gtest_discover_tests(test_flatten)
