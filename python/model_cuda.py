@@ -44,6 +44,37 @@ class SimpleMLP_CUDA:
         # Cache for backward pass (all GPU pointers)
         self.cache = {}
 
+    def __del__(self):
+        """Destructor to free all model-owned GPU allocations."""
+        if hasattr(self, 'ops') and self.ops:
+            # Free weights
+            if hasattr(self, 'w1_ptr'):
+                self.ops.free(self.w1_ptr)
+            if hasattr(self, 'w2_ptr'):
+                self.ops.free(self.w2_ptr)
+            if hasattr(self, 'w3_ptr'):
+                self.ops.free(self.w3_ptr)
+            # Free biases
+            if hasattr(self, 'b1_ptr'):
+                self.ops.free(self.b1_ptr)
+            if hasattr(self, 'b2_ptr'):
+                self.ops.free(self.b2_ptr)
+            if hasattr(self, 'b3_ptr'):
+                self.ops.free(self.b3_ptr)
+            # Free gradient buffers
+            if hasattr(self, 'gw1_ptr'):
+                self.ops.free(self.gw1_ptr)
+            if hasattr(self, 'gb1_ptr'):
+                self.ops.free(self.gb1_ptr)
+            if hasattr(self, 'gw2_ptr'):
+                self.ops.free(self.gw2_ptr)
+            if hasattr(self, 'gb2_ptr'):
+                self.ops.free(self.gb2_ptr)
+            if hasattr(self, 'gw3_ptr'):
+                self.ops.free(self.gw3_ptr)
+            if hasattr(self, 'gb3_ptr'):
+                self.ops.free(self.gb3_ptr)
+
     def forward(self, x_ptr, batch):
         """Pure CUDA forward pass.
 
@@ -115,7 +146,10 @@ class SimpleMLP_CUDA:
                                                      grad_input_ptr=None, grad_bias_ptr=self.gb3_ptr)
 
         # Backprop ReLU layer 2
-        # Note: (relu_output > 0) == (relu_input > 0), so we can use post-relu output
+        # IMPORTANT: relu_backward normally expects the forward input (pre-ReLU), but for ReLU
+        # specifically, the mask (input > 0) equals (output > 0) since relu(x) = max(0, x).
+        # Therefore, we can pass h2_relu_ptr (post-ReLU output) and it will correctly identify
+        # which neurons were active (output > 0) vs inactive (output == 0).
         grad_h2_ptr = self.ops.alloc(batch * 128)
         self.ops.relu_backward(grad_h2_relu_ptr, h2_relu_ptr, grad_h2_ptr, batch * 128)
 
@@ -132,7 +166,10 @@ class SimpleMLP_CUDA:
                                                      grad_input_ptr=None, grad_bias_ptr=self.gb2_ptr)
 
         # Backprop ReLU layer 1
-        # Note: (relu_output > 0) == (relu_input > 0), so we can use post-relu output
+        # IMPORTANT: relu_backward normally expects the forward input (pre-ReLU), but for ReLU
+        # specifically, the mask (input > 0) equals (output > 0) since relu(x) = max(0, x).
+        # Therefore, we can pass h1_relu_ptr (post-ReLU output) and it will correctly identify
+        # which neurons were active (output > 0) vs inactive (output == 0).
         grad_h1_ptr = self.ops.alloc(batch * 256)
         self.ops.relu_backward(grad_h1_relu_ptr, h1_relu_ptr, grad_h1_ptr, batch * 256)
 
@@ -156,6 +193,9 @@ class SimpleMLP_CUDA:
         self.ops.free(grad_h1_ptr)
         self.ops.free(grad_x_ptr)
         self.ops.free(logits_ptr)
+
+        # Cleanup cached activations from forward pass
+        self.cache.clear()
 
         return loss
 
