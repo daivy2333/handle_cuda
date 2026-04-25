@@ -153,3 +153,55 @@ TEST_F(Conv2dTest, NoPadding) {
         EXPECT_NEAR(output[i], output_ref[i], 1e-4f);
     }
 }
+
+TEST_F(Conv2dTest, BackwardPass) {
+    int N = 1, C = 3, H = 8, W = 8;
+    int out_C = 4, kernel_h = 3, kernel_w = 3;
+    int stride = 1, pad = 1;
+    int out_H = (H + 2 * pad - kernel_h) / stride + 1;
+    int out_W = (W + 2 * pad - kernel_w) / stride + 1;
+
+    auto input = generate_random(N * C * H * W);
+    auto weight = generate_random(out_C * C * kernel_h * kernel_w);
+    auto bias = generate_random(out_C);
+    auto grad_out = generate_random(N * out_C * out_H * out_W);
+
+    // Reference backward (simplified version - only verifying grad_bias)
+    std::vector<float> grad_bias_ref(out_C, 0.0f);
+    for (int n = 0; n < N; ++n) {
+        for (int oc = 0; oc < out_C; ++oc) {
+            for (int oh = 0; oh < out_H; ++oh) {
+                for (int ow = 0; ow < out_W; ++ow) {
+                    grad_bias_ref[oc] += grad_out[n * out_C * out_H * out_W +
+                                                  oc * out_H * out_W +
+                                                  oh * out_W + ow];
+                }
+            }
+        }
+    }
+
+    CudaBuffer d_input(N * C * H * W), d_weight(out_C * C * kernel_h * kernel_w);
+    CudaBuffer d_bias(out_C), d_output(N * out_C * out_H * out_W);
+    CudaBuffer d_grad_out(N * out_C * out_H * out_W);
+    CudaBuffer d_grad_input(N * C * H * W), d_grad_weight(out_C * C * kernel_h * kernel_w);
+    CudaBuffer d_grad_bias(out_C);
+
+    host_to_device_async(d_input.data, input.data(), N * C * H * W);
+    host_to_device_async(d_weight.data, weight.data(), out_C * C * kernel_h * kernel_w);
+    host_to_device_async(d_bias.data, bias.data(), out_C);
+    host_to_device_async(d_grad_out.data, grad_out.data(), N * out_C * out_H * out_W);
+
+    Conv2dDesc desc{N, C, H, W, out_C, out_H, out_W,
+                    kernel_h, kernel_w, stride, stride, pad, pad, 1};
+
+    cuda_conv2d_backward(d_grad_out.data, d_input.data, d_weight.data,
+                         d_grad_input.data, d_grad_weight.data, d_grad_bias.data,
+                         desc);
+
+    std::vector<float> grad_bias(out_C);
+    device_to_host(d_grad_bias.data, grad_bias.data(), out_C);
+
+    for (int oc = 0; oc < out_C; ++oc) {
+        EXPECT_NEAR(grad_bias[oc], grad_bias_ref[oc], 1e-3f);
+    }
+}
