@@ -37,7 +37,9 @@ void cuda_relu(float* data, size_t size, cudaStream_t stream = 0);
 void cuda_relu_backward(const float* grad_out, const float* forward_input, float* grad_in, size_t size, cudaStream_t stream = 0);
 
 void cuda_sigmoid(float* data, size_t size, cudaStream_t stream = 0);
-void cuda_sigmoid_backward(const float* grad_out, const float* forward_output, float* grad_in, size_t size, cudaStream_t stream = 0);
+void cuda_sigmoid(const float* input, float* output, size_t size, cudaStream_t stream = 0);
+void cuda_sigmoid_backward(const float* grad_out, const float* forward_output,
+                           float* grad_in, size_t size, cudaStream_t stream = 0);
 
 void cuda_tanh(float* data, size_t size, cudaStream_t stream = 0);
 void cuda_tanh_backward(const float* grad_out, const float* forward_output, float* grad_in, size_t size, cudaStream_t stream = 0);
