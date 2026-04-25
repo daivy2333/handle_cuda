@@ -74,6 +74,14 @@ class SimpleMLP_CUDA:
                 self.ops.free(self.gw3_ptr)
             if hasattr(self, 'gb3_ptr'):
                 self.ops.free(self.gb3_ptr)
+            # Free cached activations if any
+            if hasattr(self, 'cache'):
+                for key in ['h1_relu_ptr', 'h2_relu_ptr']:
+                    if key in self.cache and self.cache[key]:
+                        try:
+                            self.ops.free(self.cache[key])
+                        except:
+                            pass
 
     def forward(self, x_ptr, batch):
         """Pure CUDA forward pass.
@@ -212,6 +220,10 @@ class SimpleMLP_CUDA:
         """Predict on GPU, return numpy array."""
         logits_ptr = self.forward(x_ptr, batch)
         logits = self.ops.to_host(logits_ptr, (batch, 10))
+        # Free logits buffer
+        self.ops.free(logits_ptr)
+        # Clear cached activations (inference doesn't need backward)
+        self.cache.clear()
         return logits.argmax(axis=1)
 
 
