@@ -87,3 +87,14 @@ template<typename T>
 void device_to_device(T* dst, const T* src, size_t count) {
     CUDA_CHECK(cudaMemcpy(dst, src, count * sizeof(T), cudaMemcpyDeviceToDevice));
 }
+
+// Vectorized load/store helpers for float4 operations
+__device__ __forceinline__ void load_float4(const float* ptr, float& a, float& b, float& c, float& d) {
+    float4 val = *reinterpret_cast<const float4*>(ptr);
+    a = val.x; b = val.y; c = val.z; d = val.w;
+}
+
+__device__ __forceinline__ void store_float4(float* ptr, float a, float b, float c, float d) {
+    float4 val = make_float4(a, b, c, d);
+    *reinterpret_cast<float4*>(ptr) = val;
+}

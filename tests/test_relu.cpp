@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <chrono>
 
 class ReLUTest : public ::testing::Test {
 protected:
@@ -100,4 +101,30 @@ TEST_F(ReLUTest, AllNegative) {
     for (size_t i = 0; i < size; ++i) {
         EXPECT_FLOAT_EQ(output[i], 0.0f);
     }
+}
+
+TEST_F(ReLUTest, PerformanceBenchmark) {
+    size_t size = 10 * 1024 * 1024;  // 10M elements
+
+    auto input = generate_random(size);
+    CudaBuffer d_data(size);
+    host_to_device_async(d_data.data, input.data(), size);
+
+    // Warmup
+    for (int i = 0; i < 10; ++i) cuda_relu(d_data.data, size);
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // Benchmark
+    auto start = std::chrono::high_resolution_clock::now();
+    int iterations = 1000;
+    for (int i = 0; i < iterations; ++i) cuda_relu(d_data.data, size);
+    CUDA_CHECK(cudaDeviceSynchronize());
+    auto end = std::chrono::high_resolution_clock::now();
+
+    double elapsed_ms = std::chrono::duration<double, std::milli>(end - start).count() / iterations;
+    double bandwidth = size * sizeof(float) * 2 / (elapsed_ms * 1e-3) / 1e9;  // read + write
+
+    std::cout << "ReLU Performance (size=10M):\n";
+    std::cout << "  Time: " << elapsed_ms << " ms\n";
+    std::cout << "  Bandwidth: " << bandwidth << " GB/s\n";
 }
