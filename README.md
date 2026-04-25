@@ -1,63 +1,52 @@
 # CUDA Deep Learning Operators
 
-用 CUDA 实现深度学习核心算子，作为 CUDA 编程的练手项目。
+自己实现的 CUDA 深度学习算子库，支持完整神经网络训练。
 
-## 项目结构
+## 项目亮点
+
+- **纯 CUDA 实现**：9 个深度学习算子（forward + backward）
+- **性能优化**：MatMul 1062 GFLOPS, Softmax 249 GB/s, Conv2d 921 GFLOPS
+- **完整训练**：MNIST MLP 训练，准确率 95.36%
+- **正确性验证**：与 PyTorch 对比，误差 < 1e-6
+
+## 性能数据
+
+| 算子 | 性能 | 优化技术 | 对比 |
+|------|------|----------|------|
+| MatMul | 1062 GFLOPS | 32x32 Shared Memory Tiling | ~80% cuBLAS |
+| Softmax | 249 GB/s | Warp-Level Reduction (__shfl_down_sync) | 17.8x vs naive |
+| ReLU | 200 GB/s | float4 Vectorized Memory Access | 4x vs naive |
+| Conv2d | 921 GFLOPS | im2col + Tiled GEMM | 281x vs naive |
+
+## 训练效果
 
 ```
-.
-├── CMakeLists.txt
-├── include/
-│   ├── cuda_ops.h          # 算子声明
-│   └── cuda_util.h         # 工具函数
-├── src/
-│   ├── matmul.cu           # 矩阵乘法
-│   ├── relu.cu             # ReLU 激活
-│   ├── bias_add.cu         # 偏置加法
-│   ├── softmax.cu          # Softmax
-│   ├── conv2d.cu           # 2D 卷积
-│   └── maxpool2d.cu        # 2D 最大池化
-├── tests/
-│   ├── CMakeLists.txt
-│   ├── test_matmul.cpp
-│   ├── test_relu.cpp
-│   ├── test_bias_add.cpp
-│   ├── test_softmax.cpp
-│   ├── test_conv2d.cpp
-│   └── test_maxpool2d.cpp
-└── scripts/
-    ├── benchmark.py        # PyTorch 性能对比
-    └── CMakeLists.txt
+MNIST MLP (3-layer):
+- Epoch 10: test_acc=95.36%
+- Pure CUDA forward/backward: 2.37 ms/batch
+- Speedup vs NumPy: 3.84x
 ```
 
-## 已实现算子
+## 架构
 
-| 算子 | Forward | Backward | 性能 |
-|------|---------|----------|------|
-| MatMul | Tiled | Backward | 955 GFLOPS (1024x1024) |
-| ReLU | Vectorized | Backward | 203 GB/s |
-| BiasAdd | Basic | Backward | - |
-| Softmax | Warp-level | Backward | 158 GB/s (batch=256, classes=1000) |
-| Sigmoid | Basic | Backward | - |
-| Tanh | Basic | Backward | - |
-| Dropout | Basic | Backward | - |
-| Conv2d | im2col+GEMM | Backward | 728 GFLOPS |
-| MaxPool2d | Basic | Backward | - |
+```
+CUDA Layer (C++):
+├── matmul.cu      - Tiled GEMM kernel
+├── relu.cu        - Vectorized activation
+├── softmax.cu     - Warp-level reduction
+├── bias_add.cu    - Broadcasting
+├── conv2d.cu      - im2col + GEMM
+├── maxpool2d.cu   - Pooling
+├── cross_entropy.cu - Loss function
+├── sgd_update.cu  - Optimizer
+└── flatten.cu     - Reshape
 
-## 性能优化技术
-
-1. **MatMul**: 32x32 shared memory tiling
-2. **Softmax**: Warp-level reduction with shuffle instructions
-3. **ReLU**: float4 vectorized memory access
-4. **Conv2d**: im2col + tiled GEMM
-
-## 依赖
-
-- CUDA Toolkit >= 11.0
-- CMake >= 3.18
-- GoogleTest (自动下载)
-- Python3 (用于 benchmark)
-- PyTorch (用于 benchmark)
+Python Layer:
+├── cuda_ops.py    - ctypes binding
+├── model_cuda.py  - Pure CUDA MLP
+├── train_mnist_cuda.py - Training loop
+└── mnist_data.py  - Data loader
+```
 
 ## 构建
 
@@ -65,46 +54,46 @@
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
+
+# Run tests
+ctest --output-on-failure
+
+# Run training
+cd python
+python train_mnist_cuda.py
 ```
 
-## 测试
+## 技术细节
 
-```bash
-cd build
-make run_tests
-./bin/test_matmul
-./bin/test_relu
-./bin/test_bias_add
-./bin/test_softmax
-./bin/test_conv2d
-./bin/test_maxpool2d
+### MatMul Optimization
+- 32x32 shared memory tiling
+- 减少全局内存访问：K -> K/32
+- Bank conflict avoidance
+
+### Softmax Optimization
+- Warp-level reduction using `__shfl_down_sync`
+- 每个 warp (32 threads) 处理一个 batch
+- 消除串行 max/sum 计算
+
+### Conv2d Optimization
+- im2col 转换 + 优化的 GEMM
+- 复用 MatMul tiled kernel
+- 内存开销：col_buffer
+
+## 文件结构
+
+```
+handle_cuda/
+├── src/           # CUDA kernels
+├── include/       # Header files
+├── python/        # Python binding & training
+├── tests/         # GoogleTest unit tests
+├── docs/          # Performance report
+└── CMakeLists.txt
 ```
 
-## 性能对比
-
-```bash
-python3 ../scripts/benchmark.py
-```
-
-## 实现难度
-
-| 算子 | 难度 | 说明 |
-|------|------|------|
-| ReLU | ⭐ | Element-wise 操作 |
-| BiasAdd | ⭐ | Element-wise + broadcast |
-| Softmax | ⭐⭐ | 需要归一化 |
-| MatMul | ⭐⭐ | 经典 GEMM |
-| MaxPool2d | ⭐⭐ | 索引追踪 |
-| Conv2d | ⭐⭐⭐ | Im2Col + GEMM |
-
-## 设计原则
-
-1. **零外部依赖**: 除 CUDA/PyTorch 外不引入额外库
-2. **单算子单文件**: 便于学习和维护
-3. **测试驱动**: 每个算子都有对应的 GoogleTest 测试
-4. **可验证**: 测试中包含与 PyTorch 结果的对比
-
-## 参考资料
+## 参考
 
 - [CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)
-- [PyTorch ATen native/cuda](https://github.com/pytorch/pytorch/tree/main/aten/src/ATen/native/cuda)
+- [cuBLAS/cuDNN Performance](https://docs.nvidia.com/cuda/cublas/)
+- [PyTorch ATen Native CUDA](https://github.com/pytorch/pytorch/tree/main/aten/src/ATen/native/cuda)
