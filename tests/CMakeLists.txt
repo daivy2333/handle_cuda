@@ -6,6 +6,7 @@ set(CUDA_OPS_SOURCES
     ${CMAKE_SOURCE_DIR}/src/conv2d.cu
     ${CMAKE_SOURCE_DIR}/src/maxpool2d.cu
     ${CMAKE_SOURCE_DIR}/src/sigmoid.cu
+    ${CMAKE_SOURCE_DIR}/src/tanh.cu
 )
 
 add_library(cuda_ops STATIC ${CUDA_OPS_SOURCES})
@@ -40,6 +41,10 @@ add_executable(test_sigmoid test_sigmoid.cpp)
 target_link_libraries(test_sigmoid cuda_ops GTest::gtest GTest::gtest_main pthread)
 target_include_directories(test_sigmoid PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
+add_executable(test_tanh test_tanh.cpp)
+target_link_libraries(test_tanh cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_tanh PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
 include(GoogleTest)
 gtest_discover_tests(test_matmul)
 gtest_discover_tests(test_relu)
@@ -48,3 +53,4 @@ gtest_discover_tests(test_softmax)
 gtest_discover_tests(test_conv2d)
 gtest_discover_tests(test_maxpool2d)
 gtest_discover_tests(test_sigmoid)
+gtest_discover_tests(test_tanh)
