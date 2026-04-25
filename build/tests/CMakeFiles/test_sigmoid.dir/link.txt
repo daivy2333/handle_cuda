@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/test_sigmoid.dir/test_sigmoid.cpp.o -o ../bin/test_sigmoid   -L/usr/lib/x86_64-linux-gnu/stubs  libcuda_ops.a ../lib/libgtest.a ../lib/libgtest_main.a -lpthread /usr/lib/x86_64-linux-gnu/libcudart.so ../lib/libgtest.a -lcudadevrt -lcudart_static -lrt -lpthread -ldl 

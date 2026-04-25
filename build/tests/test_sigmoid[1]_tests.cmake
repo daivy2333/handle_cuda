@@ -1,7 +1,0 @@
-add_test( SigmoidTest.BasicForward /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/bin/test_sigmoid [==[--gtest_filter=SigmoidTest.BasicForward]==] --gtest_also_run_disabled_tests)
-set_tests_properties( SigmoidTest.BasicForward PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-add_test( SigmoidTest.BasicBackward /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/bin/test_sigmoid [==[--gtest_filter=SigmoidTest.BasicBackward]==] --gtest_also_run_disabled_tests)
-set_tests_properties( SigmoidTest.BasicBackward PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-add_test( SigmoidTest.LargeSize /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/bin/test_sigmoid [==[--gtest_filter=SigmoidTest.LargeSize]==] --gtest_also_run_disabled_tests)
-set_tests_properties( SigmoidTest.LargeSize PROPERTIES WORKING_DIRECTORY /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-set( test_sigmoid_TESTS SigmoidTest.BasicForward SigmoidTest.BasicBackward SigmoidTest.LargeSize)

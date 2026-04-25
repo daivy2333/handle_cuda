@@ -1,3 +1,0 @@
-/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/_deps/googletest-subbuild/CMakeFiles/googletest-populate.dir
-/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/_deps/googletest-subbuild/CMakeFiles/edit_cache.dir
-/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/_deps/googletest-subbuild/CMakeFiles/rebuild_cache.dir

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcuda_ops.a CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o CMakeFiles/cuda_ops.dir/__/src/relu.cu.o CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o
-/usr/bin/ranlib libcuda_ops.a

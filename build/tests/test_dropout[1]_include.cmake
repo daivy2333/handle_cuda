@@ -1,5 +1,0 @@
-if(EXISTS "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/test_dropout[1]_tests.cmake")
-  include("/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/test_dropout[1]_tests.cmake")
-else()
-  add_test(test_dropout_NOT_BUILT test_dropout_NOT_BUILT)
-endif()
