@@ -439,7 +439,10 @@ def test_binding():
     print("\n7. Testing relu...")
     size = 100
     relu_input = np.random.randn(size).astype(np.float32)
-    relu_ptr = ops.to_device(relu_input.copy())  # Copy to avoid modifying original
+
+    # Preserve original input for backward pass
+    forward_input_ptr = ops.to_device(relu_input.copy())  # Original input for backward
+    relu_ptr = ops.to_device(relu_input.copy())  # Buffer for ReLU output (in-place)
 
     ops.relu(relu_ptr, size)
     relu_result = ops.to_host(relu_ptr, (size,))
@@ -447,17 +450,18 @@ def test_binding():
     expected_relu = np.maximum(relu_input, 0)
     assert np.allclose(relu_result, expected_relu, atol=1e-5), "ReLU test failed!"
 
-    # Test relu backward
+    # Test relu backward (use forward_input_ptr, not relu_ptr which contains output)
     grad_relu = np.random.randn(size).astype(np.float32)
     grad_relu_ptr = ops.to_device(grad_relu)
     grad_in_ptr = ops.alloc(size)
 
-    ops.relu_backward(grad_relu_ptr, relu_ptr, grad_in_ptr, size)
+    ops.relu_backward(grad_relu_ptr, forward_input_ptr, grad_in_ptr, size)
     grad_in_result = ops.to_host(grad_in_ptr, (size,))
 
     expected_grad_in = grad_relu * (relu_input > 0).astype(np.float32)
     assert np.allclose(grad_in_result, expected_grad_in, atol=1e-5), "ReLU backward test failed!"
 
+    ops.free(forward_input_ptr)
     ops.free(relu_ptr)
     ops.free(grad_relu_ptr)
     ops.free(grad_in_ptr)
@@ -485,6 +489,15 @@ def test_binding():
     grad_soft_in_result = ops.to_host(grad_soft_in_ptr, (batch, classes))
     assert grad_soft_in_result.shape == (batch, classes), "Softmax backward shape mismatch!"
     assert not np.any(np.isnan(grad_soft_in_result)), "Softmax backward contains NaN!"
+
+    # Numerical verification of softmax backward formula:
+    # grad_in = softmax_output * (grad_out - sum(grad_out * softmax_output, axis=1, keepdims=True))
+    softmax_output = softmax_result  # Already computed softmax output
+    expected_grad_soft_in = softmax_output * (
+        grad_softmax - np.sum(grad_softmax * softmax_output, axis=1, keepdims=True)
+    )
+    assert np.allclose(grad_soft_in_result, expected_grad_soft_in, atol=1e-5), \
+        "Softmax backward numerical verification failed!"
 
     ops.free(softmax_ptr)
     ops.free(softmax_out_ptr)
