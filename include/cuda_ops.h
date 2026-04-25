@@ -57,6 +57,9 @@ void cuda_softmax_backward(const float* grad_out, const float* forward_output, f
 
 void cuda_conv2d(const float* input, const float* weight, const float* bias, float* output,
                 const Conv2dDesc& desc, cudaStream_t stream = 0);
+void cuda_conv2d_im2col(const float* input, const float* weight, const float* bias,
+                        float* output, float* col_buffer, float* gemm_buffer,
+                        const Conv2dDesc& desc, cudaStream_t stream = 0);
 void cuda_conv2d_backward(const float* grad_out, const float* input, const float* weight,
                           float* grad_input, float* grad_weight, float* grad_bias,
                           const Conv2dDesc& desc, cudaStream_t stream = 0);

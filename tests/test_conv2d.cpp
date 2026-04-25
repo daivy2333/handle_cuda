@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <chrono>
 
 class Conv2dTest : public ::testing::Test {
 protected:
@@ -204,4 +205,162 @@ TEST_F(Conv2dTest, BackwardPass) {
     for (int oc = 0; oc < out_C; ++oc) {
         EXPECT_NEAR(grad_bias[oc], grad_bias_ref[oc], 1e-3f);
     }
+}
+
+TEST_F(Conv2dTest, Im2colCorrectness) {
+    int N = 2, C = 4, H = 8, W = 8;
+    int out_C = 8, kernel = 3, stride = 1, pad = 1;
+    int out_H = (H + 2 * pad - kernel) / stride + 1;
+    int out_W = (W + 2 * pad - kernel) / stride + 1;
+
+    auto input = generate_random(N * C * H * W);
+    auto weight = generate_random(out_C * C * kernel * kernel);
+    auto bias = generate_random(out_C);
+
+    Conv2dDesc desc{N, C, H, W, out_C, out_H, out_W, kernel, kernel, stride, stride, pad, pad, 1};
+
+    // Allocate buffers
+    CudaBuffer d_input(N * C * H * W), d_weight(out_C * C * kernel * kernel);
+    CudaBuffer d_bias(out_C), d_output(N * out_C * out_H * out_W);
+    CudaBuffer d_output_im2col(N * out_C * out_H * out_W);
+    CudaBuffer d_col_buffer(C * kernel * kernel * N * out_H * out_W);
+    CudaBuffer d_gemm_buffer(out_C * N * out_H * out_W);
+
+    host_to_device_async(d_input.data, input.data(), N * C * H * W);
+    host_to_device_async(d_weight.data, weight.data(), out_C * C * kernel * kernel);
+    host_to_device_async(d_bias.data, bias.data(), out_C);
+
+    // Naive conv2d
+    cuda_conv2d(d_input.data, d_weight.data, d_bias.data, d_output.data, desc);
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // im2col + GEMM conv2d
+    cuda_conv2d_im2col(d_input.data, d_weight.data, d_bias.data,
+                       d_output_im2col.data, d_col_buffer.data, d_gemm_buffer.data, desc);
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    std::vector<float> output_naive(N * out_C * out_H * out_W);
+    std::vector<float> output_im2col(N * out_C * out_H * out_W);
+    device_to_host(d_output.data, output_naive.data(), N * out_C * out_H * out_W);
+    device_to_host(d_output_im2col.data, output_im2col.data(), N * out_C * out_H * out_W);
+
+    // Compare results
+    for (size_t i = 0; i < output_naive.size(); ++i) {
+        EXPECT_NEAR(output_naive[i], output_im2col[i], 1e-4f)
+            << "Mismatch at index " << i;
+    }
+}
+
+TEST_F(Conv2dTest, Im2colCorrectnessLarge) {
+    int N = 4, C = 16, H = 16, W = 16;
+    int out_C = 32, kernel = 3, stride = 1, pad = 1;
+    int out_H = (H + 2 * pad - kernel) / stride + 1;
+    int out_W = (W + 2 * pad - kernel) / stride + 1;
+
+    auto input = generate_random(N * C * H * W);
+    auto weight = generate_random(out_C * C * kernel * kernel);
+    auto bias = generate_random(out_C);
+
+    Conv2dDesc desc{N, C, H, W, out_C, out_H, out_W, kernel, kernel, stride, stride, pad, pad, 1};
+
+    // Allocate buffers
+    CudaBuffer d_input(N * C * H * W), d_weight(out_C * C * kernel * kernel);
+    CudaBuffer d_bias(out_C), d_output(N * out_C * out_H * out_W);
+    CudaBuffer d_output_im2col(N * out_C * out_H * out_W);
+    CudaBuffer d_col_buffer(C * kernel * kernel * N * out_H * out_W);
+    CudaBuffer d_gemm_buffer(out_C * N * out_H * out_W);
+
+    host_to_device_async(d_input.data, input.data(), N * C * H * W);
+    host_to_device_async(d_weight.data, weight.data(), out_C * C * kernel * kernel);
+    host_to_device_async(d_bias.data, bias.data(), out_C);
+
+    // Naive conv2d
+    cuda_conv2d(d_input.data, d_weight.data, d_bias.data, d_output.data, desc);
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // im2col + GEMM conv2d
+    cuda_conv2d_im2col(d_input.data, d_weight.data, d_bias.data,
+                       d_output_im2col.data, d_col_buffer.data, d_gemm_buffer.data, desc);
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    std::vector<float> output_naive(N * out_C * out_H * out_W);
+    std::vector<float> output_im2col(N * out_C * out_H * out_W);
+    device_to_host(d_output.data, output_naive.data(), N * out_C * out_H * out_W);
+    device_to_host(d_output_im2col.data, output_im2col.data(), N * out_C * out_H * out_W);
+
+    // Compare results
+    for (size_t i = 0; i < output_naive.size(); ++i) {
+        EXPECT_NEAR(output_naive[i], output_im2col[i], 1e-3f)
+            << "Mismatch at index " << i;
+    }
+}
+
+TEST_F(Conv2dTest, PerformanceBenchmark) {
+    int N = 32, C = 64, H = 32, W = 32;
+    int out_C = 64, kernel = 3, stride = 1, pad = 1;
+    int out_H = (H + 2 * pad - kernel) / stride + 1;
+    int out_W = (W + 2 * pad - kernel) / stride + 1;
+
+    auto input = generate_random(N * C * H * W);
+    auto weight = generate_random(out_C * C * kernel * kernel);
+    auto bias = generate_random(out_C);
+
+    Conv2dDesc desc{N, C, H, W, out_C, out_H, out_W, kernel, kernel, stride, stride, pad, pad, 1};
+
+    // Allocate buffers
+    CudaBuffer d_input(N * C * H * W), d_weight(out_C * C * kernel * kernel);
+    CudaBuffer d_bias(out_C), d_output(N * out_C * out_H * out_W);
+    CudaBuffer d_col_buffer(C * kernel * kernel * N * out_H * out_W);
+    CudaBuffer d_gemm_buffer(out_C * N * out_H * out_W);
+
+    host_to_device_async(d_input.data, input.data(), N * C * H * W);
+    host_to_device_async(d_weight.data, weight.data(), out_C * C * kernel * kernel);
+    host_to_device_async(d_bias.data, bias.data(), out_C);
+
+    // Warmup
+    for (int i = 0; i < 10; ++i) {
+        cuda_conv2d(d_input.data, d_weight.data, d_bias.data, d_output.data, desc);
+    }
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // Benchmark naive
+    auto start1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 100; ++i) {
+        cuda_conv2d(d_input.data, d_weight.data, d_bias.data, d_output.data, desc);
+    }
+    CUDA_CHECK(cudaDeviceSynchronize());
+    auto end1 = std::chrono::high_resolution_clock::now();
+    double naive_ms = std::chrono::duration<double, std::milli>(end1 - start1).count() / 100;
+
+    // Warmup im2col
+    for (int i = 0; i < 10; ++i) {
+        cuda_conv2d_im2col(d_input.data, d_weight.data, d_bias.data,
+                          d_output.data, d_col_buffer.data, d_gemm_buffer.data, desc);
+    }
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // Benchmark im2col
+    start1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 100; ++i) {
+        cuda_conv2d_im2col(d_input.data, d_weight.data, d_bias.data,
+                          d_output.data, d_col_buffer.data, d_gemm_buffer.data, desc);
+    }
+    CUDA_CHECK(cudaDeviceSynchronize());
+    end1 = std::chrono::high_resolution_clock::now();
+    double im2col_ms = std::chrono::duration<double, std::milli>(end1 - start1).count() / 100;
+
+    std::cout << "\n========== Conv2d Performance (N=32, C=64, H=W=32, K=3) ==========\n";
+    std::cout << "  Naive:   " << naive_ms << " ms\n";
+    std::cout << "  im2col:  " << im2col_ms << " ms\n";
+    std::cout << "  Speedup: " << naive_ms / im2col_ms << "x\n";
+    std::cout << "==================================================================\n";
+
+    // Calculate GFLOPS
+    // Each output element requires C * kernel_h * kernel_w multiplications and additions
+    // Total FLOPs = 2 * N * out_C * out_H * out_W * C * kernel_h * kernel_w
+    long long flops = 2LL * N * out_C * out_H * out_W * C * kernel * kernel;
+    double naive_gflops = flops / (naive_ms * 1e6);
+    double im2col_gflops = flops / (im2col_ms * 1e6);
+    std::cout << "  Naive GFLOPS:   " << naive_gflops << "\n";
+    std::cout << "  im2col GFLOPS:  " << im2col_gflops << "\n";
 }
