@@ -60,4 +60,9 @@ void cuda_maxpool2d(const float* input, float* output, int* indices,
 void cuda_maxpool2d_backward(const float* grad_out, const float* input, const int* indices,
                               float* grad_in, const Pool2dDesc& desc, cudaStream_t stream = 0);
 
-void cuda_dropout(float* data, float* mask, size_t size, float dropout_prob, bool training, cudaStream_t stream = 0);
+void cuda_dropout(float* data, float* mask, size_t size, float dropout_prob,
+                  bool training, cudaStream_t stream = 0);
+void cuda_dropout(const float* input, float* output, float* mask, size_t size,
+                  float dropout_prob, bool training, cudaStream_t stream = 0);
+void cuda_dropout_backward(const float* grad_out, const float* mask,
+                           float* grad_in, size_t size, cudaStream_t stream = 0);
