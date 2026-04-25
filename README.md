@@ -23,14 +23,16 @@
 
 ## 📈 性能数据
 
+> 测试硬件：**Tesla T4 (16GB)** · FP32 峰值 8.1 TFLOPS · 显存带宽 320 GB/s
+
 ### 算子性能
 
-| 算子 | 性能 | 优化技术 | vs Naive |
-|------|------|----------|----------|
-| **MatMul** | 1062 GFLOPS | 32×32 Shared Memory Tiling | +26% |
-| **Softmax** | 249 GB/s | Warp-Level Reduction (`__shfl_down_sync`) | **17.8x** |
-| **ReLU** | 200 GB/s | float4 Vectorized Memory Access | **4x** |
-| **Conv2d** | 921 GFLOPS | im2col + Tiled GEMM | **281x** |
+| 算子 | 测试尺寸 | 性能 | 优化技术 | vs Naive |
+|------|---------|------|----------|----------|
+| **MatMul** | 2048×2048 | 1062 GFLOPS (13% 峰值) | 32×32 Shared Memory Tiling | +26% |
+| **Softmax** | 256×10000 | 249 GB/s (78% 带宽) | Warp-Level Reduction (`__shfl_down_sync`) | **17.8x** |
+| **ReLU** | 100M 元素 | 200 GB/s (63% 带宽) | float4 Vectorized Memory Access | **4x** |
+| **Conv2d** | 16×128×16×16, K=3 | 921 GFLOPS (11% 峰值) | im2col + Tiled GEMM | **357x** |
 
 ### 训练性能对比
 
@@ -159,7 +161,8 @@ __shared__ float As[32][32];  // A 的 tile
 __shared__ float Bs[32][32];  // B 的 tile
 
 // 减少全局内存访问: K 次 → K/32 次
-// 性能: 1062 GFLOPS (2048×2048 矩阵)
+// 性能: 1062 GFLOPS @ 2048×2048 (Tesla T4, 13% 峰值)
+// Naive kernel: ~760 GFLOPS (未使用 shared memory，每线程独立计算)
 ```
 
 ### 2. Softmax: Warp-Level Reduction
@@ -174,7 +177,8 @@ __device__ float warp_reduce_max(float val) {
 }
 
 // 每个 warp (32 threads) 处理一个 batch
-// 性能: 249 GB/s (256×10000)
+// 性能: 249 GB/s @ 256×10000 (Tesla T4, 78% 显存带宽利用率)
+// Naive kernel: 14 GB/s (每线程串行计算 max/sum，无并行 reduction)
 ```
 
 ### 3. Conv2d: im2col + Tiled GEMM
@@ -184,7 +188,14 @@ __device__ float warp_reduce_max(float val) {
 // input [N, C, H, W] → col [C×K², N×out_H×out_W]
 
 // 复用优化后的 MatMul kernel
-// 性能: 921 GFLOPS (16×128×16×16, K=3)
+// 性能: 921 GFLOPS @ 16×128×16×16, K=3 (Tesla T4)
+
+// Naive kernel 特征 (conv2d.cu:84-128):
+// - 每个 block (256 threads) 只计算一个输出像素
+// - 6层嵌套循环：in_c × kernel_h × kernel_w
+// - 无 shared memory：input/weight 无法复用
+// - 内存访问不合并：相邻线程访问完全不同地址
+// → 仅 2.58 GFLOPS，差距 357x（架构瓶颈，非 bug）
 ```
 
 ---
