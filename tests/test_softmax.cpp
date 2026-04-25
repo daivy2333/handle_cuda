@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <chrono>
 
 class SoftmaxTest : public ::testing::Test {
 protected:
@@ -99,4 +100,36 @@ TEST_F(SoftmaxTest, NonNegative) {
     for (size_t i = 0; i < size; ++i) {
         EXPECT_GE(output[i], 0.0f);
     }
+}
+
+TEST_F(SoftmaxTest, PerformanceBenchmark) {
+    size_t batch_size = 256;
+    size_t num_classes = 1000;
+
+    auto input = generate_random(batch_size * num_classes);
+
+    CudaBuffer d_input(batch_size * num_classes), d_output(batch_size * num_classes);
+    host_to_device_async(d_input.data, input.data(), batch_size * num_classes);
+
+    // Warmup
+    for (int i = 0; i < 10; ++i) {
+        cuda_softmax(d_input.data, d_output.data, batch_size, num_classes);
+    }
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // Benchmark
+    auto start = std::chrono::high_resolution_clock::now();
+    int iterations = 1000;
+    for (int i = 0; i < iterations; ++i) {
+        cuda_softmax(d_input.data, d_output.data, batch_size, num_classes);
+    }
+    CUDA_CHECK(cudaDeviceSynchronize());
+    auto end = std::chrono::high_resolution_clock::now();
+
+    double elapsed_ms = std::chrono::duration<double, std::milli>(end - start).count() / iterations;
+    double bandwidth = batch_size * num_classes * sizeof(float) * 2 / (elapsed_ms * 1e-3) / 1e9;
+
+    std::cout << "Softmax Performance (batch=" << batch_size << ", classes=" << num_classes << "):\n";
+    std::cout << "  Time: " << elapsed_ms << " ms\n";
+    std::cout << "  Bandwidth: " << bandwidth << " GB/s\n";
 }
