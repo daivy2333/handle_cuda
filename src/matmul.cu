@@ -4,6 +4,47 @@
 
 namespace {
 
+#define TILE_SIZE 32
+
+__global__ void matmul_tiled_kernel(const float* A, const float* B, float* C,
+                                    int M, int N, int K) {
+    __shared__ float As[TILE_SIZE][TILE_SIZE];
+    __shared__ float Bs[TILE_SIZE][TILE_SIZE];
+
+    int row = blockIdx.y * TILE_SIZE + threadIdx.y;
+    int col = blockIdx.x * TILE_SIZE + threadIdx.x;
+
+    float sum = 0.0f;
+
+    for (int t = 0; t < (K + TILE_SIZE - 1) / TILE_SIZE; ++t) {
+        // Load tile from A
+        if (row < M && t * TILE_SIZE + threadIdx.x < K) {
+            As[threadIdx.y][threadIdx.x] = A[row * K + t * TILE_SIZE + threadIdx.x];
+        } else {
+            As[threadIdx.y][threadIdx.x] = 0.0f;
+        }
+
+        // Load tile from B
+        if (col < N && t * TILE_SIZE + threadIdx.y < K) {
+            Bs[threadIdx.y][threadIdx.x] = B[(t * TILE_SIZE + threadIdx.y) * N + col];
+        } else {
+            Bs[threadIdx.y][threadIdx.x] = 0.0f;
+        }
+
+        __syncthreads();
+
+        for (int k = 0; k < TILE_SIZE; ++k) {
+            sum += As[threadIdx.y][k] * Bs[k][threadIdx.x];
+        }
+
+        __syncthreads();
+    }
+
+    if (row < M && col < N) {
+        C[row * N + col] = sum;
+    }
+}
+
 __global__ void matmul_kernel(const float* A, const float* B, float* C,
                                int M, int N, int K,
                                int lda, int ldb, int ldc) {
@@ -74,19 +115,20 @@ void cuda_matmul(const float* A, const float* B, float* C, const MatMulDesc& des
     int N = static_cast<int>(desc.N);
     int K = static_cast<int>(desc.K);
 
-    int lda = desc.transpose_a ? M : K;
-    int ldb = desc.transpose_b ? K : N;
-    int ldc = N;
-
-    dim3 block_dim(16, 16);
-    dim3 grid_dim((N + 15) / 16, (M + 15) / 16);
-
     if (desc.transpose_a || desc.transpose_b) {
+        // Keep transpose version for now
+        int lda = desc.transpose_a ? M : K;
+        int ldb = desc.transpose_b ? K : N;
+        int ldc = N;
+        dim3 block_dim(16, 16);
+        dim3 grid_dim((N + 15) / 16, (M + 15) / 16);
         matmul_transpose_kernel<<<grid_dim, block_dim, 0, stream>>>(
             A, B, C, M, N, K, desc.transpose_a, desc.transpose_b, lda, ldb, ldc);
     } else {
-        matmul_kernel<<<grid_dim, block_dim, 0, stream>>>(
-            A, B, C, M, N, K, lda, ldb, ldc);
+        dim3 block_dim(TILE_SIZE, TILE_SIZE);
+        dim3 grid_dim((N + TILE_SIZE - 1) / TILE_SIZE,
+                      (M + TILE_SIZE - 1) / TILE_SIZE);
+        matmul_tiled_kernel<<<grid_dim, block_dim, 0, stream>>>(A, B, C, M, N, K);
     }
 
     CUDA_CHECK(cudaGetLastError());
