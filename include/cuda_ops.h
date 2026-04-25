@@ -75,3 +75,11 @@ void cuda_dropout(const float* input, float* output, float* mask, size_t size,
                   float dropout_prob, bool training, cudaStream_t stream = 0);
 void cuda_dropout_backward(const float* grad_out, const float* mask,
                            float* grad_in, size_t size, cudaStream_t stream = 0);
+
+// CrossEntropyLoss (with C export for Python binding)
+extern "C" {
+void cuda_cross_entropy_loss(const float* logits, const int* targets,
+                              float* loss, float* grad_logits,
+                              size_t batch_size, size_t num_classes,
+                              cudaStream_t stream = 0);
+}
