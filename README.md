@@ -32,14 +32,24 @@
 
 ## 已实现算子
 
-| 算子 | 文件 | 状态 |
-|------|------|------|
-| MatMul | src/matmul.cu | ✅ |
-| BiasAdd | src/bias_add.cu | ✅ |
-| ReLU | src/relu.cu | ✅ |
-| Softmax | src/softmax.cu | ✅ |
-| Conv2d | src/conv2d.cu | ✅ |
-| MaxPool2d | src/maxpool2d.cu | ✅ |
+| 算子 | Forward | Backward | 性能 |
+|------|---------|----------|------|
+| MatMul | Tiled | Backward | 955 GFLOPS (1024x1024) |
+| ReLU | Vectorized | Backward | 203 GB/s |
+| BiasAdd | Basic | Backward | - |
+| Softmax | Warp-level | Backward | 158 GB/s (batch=256, classes=1000) |
+| Sigmoid | Basic | Backward | - |
+| Tanh | Basic | Backward | - |
+| Dropout | Basic | Backward | - |
+| Conv2d | im2col+GEMM | Backward | 728 GFLOPS |
+| MaxPool2d | Basic | Backward | - |
+
+## 性能优化技术
+
+1. **MatMul**: 32x32 shared memory tiling
+2. **Softmax**: Warp-level reduction with shuffle instructions
+3. **ReLU**: float4 vectorized memory access
+4. **Conv2d**: im2col + tiled GEMM
 
 ## 依赖
 

@@ -27,3 +27,8 @@ enable_testing()
 
 add_subdirectory(tests)
 add_subdirectory(scripts)
+
+# Benchmark executable
+add_executable(benchmark src/benchmark.cpp)
+target_link_libraries(benchmark cuda_ops)
+target_include_directories(benchmark PRIVATE ${CMAKE_SOURCE_DIR}/include)
