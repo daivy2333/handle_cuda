@@ -82,4 +82,8 @@ void cuda_cross_entropy_loss(const float* logits, const int* targets,
                               float* loss, float* grad_logits,
                               size_t batch_size, size_t num_classes,
                               cudaStream_t stream = 0);
+
+void cuda_sgd_update(float* param, const float* grad,
+                      size_t size, float learning_rate,
+                      cudaStream_t stream = 0);
 }
