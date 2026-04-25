@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda
+CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/build
+CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build
 
 # Include any dependencies generated for this target.
 include tests/CMakeFiles/test_softmax.dir/depend.make
@@ -72,16 +72,16 @@ include tests/CMakeFiles/test_softmax.dir/flags.make
 tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.o: tests/CMakeFiles/test_softmax.dir/flags.make
 tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.o: ../tests/test_softmax.cpp
 tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.o: tests/CMakeFiles/test_softmax.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.o"
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.o -MF CMakeFiles/test_softmax.dir/test_softmax.cpp.o.d -o CMakeFiles/test_softmax.dir/test_softmax.cpp.o -c /home/daivy/projects/handle_cuda/tests/test_softmax.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.o -MF CMakeFiles/test_softmax.dir/test_softmax.cpp.o.d -o CMakeFiles/test_softmax.dir/test_softmax.cpp.o -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/tests/test_softmax.cpp
 
 tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/test_softmax.dir/test_softmax.cpp.i"
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/daivy/projects/handle_cuda/tests/test_softmax.cpp > CMakeFiles/test_softmax.dir/test_softmax.cpp.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/tests/test_softmax.cpp > CMakeFiles/test_softmax.dir/test_softmax.cpp.i
 
 tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/test_softmax.dir/test_softmax.cpp.s"
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/daivy/projects/handle_cuda/tests/test_softmax.cpp -o CMakeFiles/test_softmax.dir/test_softmax.cpp.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/tests/test_softmax.cpp -o CMakeFiles/test_softmax.dir/test_softmax.cpp.s
 
 # Object files for target test_softmax
 test_softmax_OBJECTS = \
@@ -98,19 +98,19 @@ bin/test_softmax: lib/libgtest_main.a
 bin/test_softmax: /usr/lib/x86_64-linux-gnu/libcudart.so
 bin/test_softmax: lib/libgtest.a
 bin/test_softmax: tests/CMakeFiles/test_softmax.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable ../bin/test_softmax"
-	cd /home/daivy/projects/handle_cuda/build/tests && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_softmax.dir/link.txt --verbose=$(VERBOSE)
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/cmake -D TEST_TARGET=test_softmax -D TEST_EXECUTABLE=/home/daivy/projects/handle_cuda/build/bin/test_softmax -D TEST_EXECUTOR= -D TEST_WORKING_DIR=/home/daivy/projects/handle_cuda/build/tests -D TEST_EXTRA_ARGS= -D TEST_PROPERTIES= -D TEST_PREFIX= -D TEST_SUFFIX= -D TEST_FILTER= -D NO_PRETTY_TYPES=FALSE -D NO_PRETTY_VALUES=FALSE -D TEST_LIST=test_softmax_TESTS -D CTEST_FILE=/home/daivy/projects/handle_cuda/build/tests/test_softmax[1]_tests.cmake -D TEST_DISCOVERY_TIMEOUT=5 -D TEST_XML_OUTPUT_DIR= -P /usr/share/cmake-3.22/Modules/GoogleTestAddTests.cmake
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable ../bin/test_softmax"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_softmax.dir/link.txt --verbose=$(VERBOSE)
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/cmake -D TEST_TARGET=test_softmax -D TEST_EXECUTABLE=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/bin/test_softmax -D TEST_EXECUTOR= -D TEST_WORKING_DIR=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests -D TEST_EXTRA_ARGS= -D TEST_PROPERTIES= -D TEST_PREFIX= -D TEST_SUFFIX= -D TEST_FILTER= -D NO_PRETTY_TYPES=FALSE -D NO_PRETTY_VALUES=FALSE -D TEST_LIST=test_softmax_TESTS -D CTEST_FILE=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/test_softmax[1]_tests.cmake -D TEST_DISCOVERY_TIMEOUT=5 -D TEST_XML_OUTPUT_DIR= -P /usr/share/cmake-3.22/Modules/GoogleTestAddTests.cmake
 
 # Rule to build all files generated by this target.
 tests/CMakeFiles/test_softmax.dir/build: bin/test_softmax
 .PHONY : tests/CMakeFiles/test_softmax.dir/build
 
 tests/CMakeFiles/test_softmax.dir/clean:
-	cd /home/daivy/projects/handle_cuda/build/tests && $(CMAKE_COMMAND) -P CMakeFiles/test_softmax.dir/cmake_clean.cmake
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && $(CMAKE_COMMAND) -P CMakeFiles/test_softmax.dir/cmake_clean.cmake
 .PHONY : tests/CMakeFiles/test_softmax.dir/clean
 
 tests/CMakeFiles/test_softmax.dir/depend:
-	cd /home/daivy/projects/handle_cuda/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/daivy/projects/handle_cuda /home/daivy/projects/handle_cuda/tests /home/daivy/projects/handle_cuda/build /home/daivy/projects/handle_cuda/build/tests /home/daivy/projects/handle_cuda/build/tests/CMakeFiles/test_softmax.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/tests /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/CMakeFiles/test_softmax.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : tests/CMakeFiles/test_softmax.dir/depend
 

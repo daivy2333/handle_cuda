@@ -1,4 +1,4 @@
-# Install script for directory: /home/daivy/projects/handle_cuda
+# Install script for directory: /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -12,7 +12,7 @@ if(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
     string(REGEX REPLACE "^[^A-Za-z0-9_]+" ""
            CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
   else()
-    set(CMAKE_INSTALL_CONFIG_NAME "")
+    set(CMAKE_INSTALL_CONFIG_NAME "Release")
   endif()
   message(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
 endif()
@@ -44,17 +44,17 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/daivy/projects/handle_cuda/build/_deps/googletest-build/cmake_install.cmake")
+  include("/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/_deps/googletest-build/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/daivy/projects/handle_cuda/build/tests/cmake_install.cmake")
+  include("/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/daivy/projects/handle_cuda/build/scripts/cmake_install.cmake")
+  include("/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -65,5 +65,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/daivy/projects/handle_cuda/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

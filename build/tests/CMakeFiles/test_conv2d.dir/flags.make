@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/daivy/projects/handle_cuda/include -isystem /home/daivy/projects/handle_cuda/build/_deps/googletest-src/googletest/include -isystem /home/daivy/projects/handle_cuda/build/_deps/googletest-src/googletest
+CXX_INCLUDES = -I/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/include -isystem /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/_deps/googletest-src/googletest/include -isystem /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/_deps/googletest-src/googletest
 
-CXX_FLAGS = -std=gnu++17
+CXX_FLAGS = -O3 -DNDEBUG -std=gnu++17
 

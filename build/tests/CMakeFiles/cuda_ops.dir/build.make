@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda
+CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/build
+CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build
 
 # Include any dependencies generated for this target.
 include tests/CMakeFiles/cuda_ops.dir/depend.make
@@ -72,8 +72,8 @@ include tests/CMakeFiles/cuda_ops.dir/flags.make
 tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o: tests/CMakeFiles/cuda_ops.dir/flags.make
 tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o: ../src/matmul.cu
 tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o: tests/CMakeFiles/cuda_ops.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o"
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/src/matmul.cu -o CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/matmul.cu -o CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o
 
 tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/cuda_ops.dir/__/src/matmul.cu.i"
@@ -86,8 +86,8 @@ tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.s: cmake_force
 tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o: tests/CMakeFiles/cuda_ops.dir/flags.make
 tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o: ../src/relu.cu
 tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o: tests/CMakeFiles/cuda_ops.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o"
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/relu.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/src/relu.cu -o CMakeFiles/cuda_ops.dir/__/src/relu.cu.o
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/relu.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/relu.cu -o CMakeFiles/cuda_ops.dir/__/src/relu.cu.o
 
 tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/cuda_ops.dir/__/src/relu.cu.i"
@@ -100,8 +100,8 @@ tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.s: cmake_force
 tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o: tests/CMakeFiles/cuda_ops.dir/flags.make
 tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o: ../src/bias_add.cu
 tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o: tests/CMakeFiles/cuda_ops.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o"
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/src/bias_add.cu -o CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/bias_add.cu -o CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o
 
 tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.i"
@@ -114,8 +114,8 @@ tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.s: cmake_force
 tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o: tests/CMakeFiles/cuda_ops.dir/flags.make
 tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o: ../src/softmax.cu
 tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o: tests/CMakeFiles/cuda_ops.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o"
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/src/softmax.cu -o CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/softmax.cu -o CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o
 
 tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/cuda_ops.dir/__/src/softmax.cu.i"
@@ -128,8 +128,8 @@ tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.s: cmake_force
 tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o: tests/CMakeFiles/cuda_ops.dir/flags.make
 tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o: ../src/conv2d.cu
 tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o: tests/CMakeFiles/cuda_ops.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o"
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/src/conv2d.cu -o CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/conv2d.cu -o CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o
 
 tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.i"
@@ -142,8 +142,8 @@ tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.s: cmake_force
 tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o: tests/CMakeFiles/cuda_ops.dir/flags.make
 tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o: ../src/maxpool2d.cu
 tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o: tests/CMakeFiles/cuda_ops.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o"
-	cd /home/daivy/projects/handle_cuda/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/src/maxpool2d.cu -o CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/maxpool2d.cu -o CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o
 
 tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.i"
@@ -153,6 +153,48 @@ tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CUDA source to assembly CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.s"
 	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_ASSEMBLY_SOURCE
 
+tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o: tests/CMakeFiles/cuda_ops.dir/flags.make
+tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o: ../src/sigmoid.cu
+tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o: tests/CMakeFiles/cuda_ops.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/sigmoid.cu -o CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o
+
+tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.i"
+	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_PREPROCESSED_SOURCE
+
+tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CUDA source to assembly CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.s"
+	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_ASSEMBLY_SOURCE
+
+tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o: tests/CMakeFiles/cuda_ops.dir/flags.make
+tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o: ../src/tanh.cu
+tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o: tests/CMakeFiles/cuda_ops.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/tanh.cu -o CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o
+
+tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/cuda_ops.dir/__/src/tanh.cu.i"
+	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_PREPROCESSED_SOURCE
+
+tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CUDA source to assembly CMakeFiles/cuda_ops.dir/__/src/tanh.cu.s"
+	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_ASSEMBLY_SOURCE
+
+tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o: tests/CMakeFiles/cuda_ops.dir/flags.make
+tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o: ../src/dropout.cu
+tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o: tests/CMakeFiles/cuda_ops.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CUDA object tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && /usr/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o -MF CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o.d -x cu -c /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/dropout.cu -o CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o
+
+tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/cuda_ops.dir/__/src/dropout.cu.i"
+	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_PREPROCESSED_SOURCE
+
+tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CUDA source to assembly CMakeFiles/cuda_ops.dir/__/src/dropout.cu.s"
+	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_ASSEMBLY_SOURCE
+
 # Object files for target cuda_ops
 cuda_ops_OBJECTS = \
 "CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o" \
@@ -160,7 +202,10 @@ cuda_ops_OBJECTS = \
 "CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o" \
 "CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o" \
 "CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o" \
-"CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o"
+"CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o" \
+"CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o" \
+"CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o" \
+"CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o"
 
 # External object files for target cuda_ops
 cuda_ops_EXTERNAL_OBJECTS =
@@ -171,21 +216,24 @@ tests/libcuda_ops.a: tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o
 tests/libcuda_ops.a: tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o
 tests/libcuda_ops.a: tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o
 tests/libcuda_ops.a: tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o
+tests/libcuda_ops.a: tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o
+tests/libcuda_ops.a: tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o
+tests/libcuda_ops.a: tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o
 tests/libcuda_ops.a: tests/CMakeFiles/cuda_ops.dir/build.make
 tests/libcuda_ops.a: tests/CMakeFiles/cuda_ops.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CUDA static library libcuda_ops.a"
-	cd /home/daivy/projects/handle_cuda/build/tests && $(CMAKE_COMMAND) -P CMakeFiles/cuda_ops.dir/cmake_clean_target.cmake
-	cd /home/daivy/projects/handle_cuda/build/tests && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/cuda_ops.dir/link.txt --verbose=$(VERBOSE)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CUDA static library libcuda_ops.a"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && $(CMAKE_COMMAND) -P CMakeFiles/cuda_ops.dir/cmake_clean_target.cmake
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/cuda_ops.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 tests/CMakeFiles/cuda_ops.dir/build: tests/libcuda_ops.a
 .PHONY : tests/CMakeFiles/cuda_ops.dir/build
 
 tests/CMakeFiles/cuda_ops.dir/clean:
-	cd /home/daivy/projects/handle_cuda/build/tests && $(CMAKE_COMMAND) -P CMakeFiles/cuda_ops.dir/cmake_clean.cmake
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests && $(CMAKE_COMMAND) -P CMakeFiles/cuda_ops.dir/cmake_clean.cmake
 .PHONY : tests/CMakeFiles/cuda_ops.dir/clean
 
 tests/CMakeFiles/cuda_ops.dir/depend:
-	cd /home/daivy/projects/handle_cuda/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/daivy/projects/handle_cuda /home/daivy/projects/handle_cuda/tests /home/daivy/projects/handle_cuda/build /home/daivy/projects/handle_cuda/build/tests /home/daivy/projects/handle_cuda/build/tests/CMakeFiles/cuda_ops.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/tests /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/CMakeFiles/cuda_ops.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : tests/CMakeFiles/cuda_ops.dir/depend
 

@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda
+CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/build
+CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build
 
 # Utility rule file for run_tests.
 
@@ -67,13 +67,13 @@ include scripts/CMakeFiles/run_tests.dir/compiler_depend.make
 include scripts/CMakeFiles/run_tests.dir/progress.make
 
 scripts/CMakeFiles/run_tests:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/daivy/projects/handle_cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Running all CUDA operator tests"
-	cd /home/daivy/projects/handle_cuda/build/scripts && ../bin/test_matmul
-	cd /home/daivy/projects/handle_cuda/build/scripts && ../bin/test_relu
-	cd /home/daivy/projects/handle_cuda/build/scripts && ../bin/test_bias_add
-	cd /home/daivy/projects/handle_cuda/build/scripts && ../bin/test_softmax
-	cd /home/daivy/projects/handle_cuda/build/scripts && ../bin/test_conv2d
-	cd /home/daivy/projects/handle_cuda/build/scripts && ../bin/test_maxpool2d
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Running all CUDA operator tests"
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts && ../bin/test_matmul
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts && ../bin/test_relu
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts && ../bin/test_bias_add
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts && ../bin/test_softmax
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts && ../bin/test_conv2d
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts && ../bin/test_maxpool2d
 
 run_tests: scripts/CMakeFiles/run_tests
 run_tests: scripts/CMakeFiles/run_tests.dir/build.make
@@ -84,10 +84,10 @@ scripts/CMakeFiles/run_tests.dir/build: run_tests
 .PHONY : scripts/CMakeFiles/run_tests.dir/build
 
 scripts/CMakeFiles/run_tests.dir/clean:
-	cd /home/daivy/projects/handle_cuda/build/scripts && $(CMAKE_COMMAND) -P CMakeFiles/run_tests.dir/cmake_clean.cmake
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts && $(CMAKE_COMMAND) -P CMakeFiles/run_tests.dir/cmake_clean.cmake
 .PHONY : scripts/CMakeFiles/run_tests.dir/clean
 
 scripts/CMakeFiles/run_tests.dir/depend:
-	cd /home/daivy/projects/handle_cuda/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/daivy/projects/handle_cuda /home/daivy/projects/handle_cuda/scripts /home/daivy/projects/handle_cuda/build /home/daivy/projects/handle_cuda/build/scripts /home/daivy/projects/handle_cuda/build/scripts/CMakeFiles/run_tests.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/scripts /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/scripts/CMakeFiles/run_tests.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : scripts/CMakeFiles/run_tests.dir/depend
 

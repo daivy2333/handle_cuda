@@ -1,4 +1,4 @@
-tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o : /home/daivy/projects/handle_cuda/src/bias_add.cu \
+tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o : /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/bias_add.cu \
     /usr/include/stdc-predef.h \
     /usr/include/cuda_runtime.h \
     /usr/include/crt/host_config.h \
@@ -41,6 +41,8 @@ tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o : /home/daivy/projects/handle
     /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
     /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
     /usr/include/strings.h \
+    /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
+    /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
     /usr/include/time.h \
     /usr/include/x86_64-linux-gnu/bits/time.h \
     /usr/include/x86_64-linux-gnu/bits/types.h \
@@ -75,6 +77,8 @@ tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o : /home/daivy/projects/handle
     /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
     /usr/include/x86_64-linux-gnu/bits/floatn.h \
     /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
+    /usr/include/x86_64-linux-gnu/bits/stdio.h \
+    /usr/include/x86_64-linux-gnu/bits/stdio2.h \
     /usr/include/c++/11/stdlib.h \
     /usr/include/c++/11/cstdlib \
     /usr/include/stdlib.h \
@@ -89,6 +93,7 @@ tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o : /home/daivy/projects/handle
     /usr/include/x86_64-linux-gnu/bits/select.h \
     /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
     /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
+    /usr/include/x86_64-linux-gnu/bits/select2.h \
     /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
     /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
     /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
@@ -96,7 +101,9 @@ tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o : /home/daivy/projects/handle
     /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
     /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h \
     /usr/include/alloca.h \
+    /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
     /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
+    /usr/include/x86_64-linux-gnu/bits/stdlib.h \
     /usr/include/c++/11/bits/std_abs.h \
     /usr/include/assert.h \
     /usr/include/crt/math_functions.h \
@@ -177,8 +184,8 @@ tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o : /home/daivy/projects/handle
     /usr/include/texture_indirect_functions.h \
     /usr/include/surface_indirect_functions.h \
     /usr/include/device_launch_parameters.h \
-    /home/daivy/projects/handle_cuda/include/cuda_ops.h \
+    /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/include/cuda_ops.h \
     /usr/include/c++/11/cstddef \
-    /home/daivy/projects/handle_cuda/include/cuda_util.h \
+    /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/include/cuda_util.h \
     /usr/include/c++/11/cstring \
     /usr/include/c++/11/cstdio

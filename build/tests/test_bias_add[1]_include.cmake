@@ -1,5 +1,5 @@
-if(EXISTS "/home/daivy/projects/handle_cuda/build/tests/test_bias_add[1]_tests.cmake")
-  include("/home/daivy/projects/handle_cuda/build/tests/test_bias_add[1]_tests.cmake")
+if(EXISTS "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/test_bias_add[1]_tests.cmake")
+  include("/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/test_bias_add[1]_tests.cmake")
 else()
   add_test(test_bias_add_NOT_BUILT test_bias_add_NOT_BUILT)
 endif()

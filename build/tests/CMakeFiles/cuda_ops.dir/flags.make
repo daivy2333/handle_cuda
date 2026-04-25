@@ -4,7 +4,7 @@
 # compile CUDA with /usr/bin/nvcc
 CUDA_DEFINES = 
 
-CUDA_INCLUDES = -I/home/daivy/projects/handle_cuda/include
+CUDA_INCLUDES = -I/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/include
 
-CUDA_FLAGS =  --generate-code=arch=compute_52,code=[compute_52,sm_52] -std=c++17
+CUDA_FLAGS = -O3 -DNDEBUG --generate-code=arch=compute_52,code=[compute_52,sm_52] -std=c++17
 

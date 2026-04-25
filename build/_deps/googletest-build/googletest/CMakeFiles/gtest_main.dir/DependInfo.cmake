@@ -8,12 +8,12 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/daivy/projects/handle_cuda/build/_deps/googletest-src/googletest/src/gtest_main.cc" "_deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o" "gcc" "_deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/_deps/googletest-src/googletest/src/gtest_main.cc" "_deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o" "gcc" "_deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o.d"
   )
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/home/daivy/projects/handle_cuda/build/_deps/googletest-build/googletest/CMakeFiles/gtest.dir/DependInfo.cmake"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/_deps/googletest-build/googletest/CMakeFiles/gtest.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

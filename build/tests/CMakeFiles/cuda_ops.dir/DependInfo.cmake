@@ -8,12 +8,15 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/daivy/projects/handle_cuda/src/bias_add.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o.d"
-  "/home/daivy/projects/handle_cuda/src/conv2d.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o.d"
-  "/home/daivy/projects/handle_cuda/src/matmul.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o.d"
-  "/home/daivy/projects/handle_cuda/src/maxpool2d.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o.d"
-  "/home/daivy/projects/handle_cuda/src/relu.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o.d"
-  "/home/daivy/projects/handle_cuda/src/softmax.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/bias_add.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/conv2d.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/dropout.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/matmul.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/maxpool2d.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/relu.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/sigmoid.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/softmax.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o.d"
+  "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/src/tanh.cu" "tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o" "gcc" "tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o.d"
   )
 
 # Targets to which this target links.

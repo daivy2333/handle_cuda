@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda
+CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/build
+CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -142,9 +142,9 @@ install/strip/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/daivy/projects/handle_cuda/build/CMakeFiles /home/daivy/projects/handle_cuda/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/daivy/projects/handle_cuda/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -170,6 +170,19 @@ preinstall/fast:
 depend:
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
+
+#=============================================================================
+# Target rules for targets named benchmark
+
+# Build rule for target.
+benchmark: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 benchmark
+.PHONY : benchmark
+
+# fast build rule for target.
+benchmark/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/benchmark.dir/build.make CMakeFiles/benchmark.dir/build
+.PHONY : benchmark/fast
 
 #=============================================================================
 # Target rules for targets named gmock
@@ -315,6 +328,45 @@ test_maxpool2d/fast:
 .PHONY : test_maxpool2d/fast
 
 #=============================================================================
+# Target rules for targets named test_sigmoid
+
+# Build rule for target.
+test_sigmoid: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_sigmoid
+.PHONY : test_sigmoid
+
+# fast build rule for target.
+test_sigmoid/fast:
+	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_sigmoid.dir/build.make tests/CMakeFiles/test_sigmoid.dir/build
+.PHONY : test_sigmoid/fast
+
+#=============================================================================
+# Target rules for targets named test_tanh
+
+# Build rule for target.
+test_tanh: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_tanh
+.PHONY : test_tanh
+
+# fast build rule for target.
+test_tanh/fast:
+	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_tanh.dir/build.make tests/CMakeFiles/test_tanh.dir/build
+.PHONY : test_tanh/fast
+
+#=============================================================================
+# Target rules for targets named test_dropout
+
+# Build rule for target.
+test_dropout: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_dropout
+.PHONY : test_dropout
+
+# fast build rule for target.
+test_dropout/fast:
+	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dropout.dir/build.make tests/CMakeFiles/test_dropout.dir/build
+.PHONY : test_dropout/fast
+
+#=============================================================================
 # Target rules for targets named run_tests
 
 # Build rule for target.
@@ -326,6 +378,30 @@ run_tests: cmake_check_build_system
 run_tests/fast:
 	$(MAKE) $(MAKESILENT) -f scripts/CMakeFiles/run_tests.dir/build.make scripts/CMakeFiles/run_tests.dir/build
 .PHONY : run_tests/fast
+
+src/benchmark.o: src/benchmark.cpp.o
+.PHONY : src/benchmark.o
+
+# target to build an object file
+src/benchmark.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/benchmark.dir/build.make CMakeFiles/benchmark.dir/src/benchmark.cpp.o
+.PHONY : src/benchmark.cpp.o
+
+src/benchmark.i: src/benchmark.cpp.i
+.PHONY : src/benchmark.i
+
+# target to preprocess a source file
+src/benchmark.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/benchmark.dir/build.make CMakeFiles/benchmark.dir/src/benchmark.cpp.i
+.PHONY : src/benchmark.cpp.i
+
+src/benchmark.s: src/benchmark.cpp.s
+.PHONY : src/benchmark.s
+
+# target to generate assembly for a file
+src/benchmark.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/benchmark.dir/build.make CMakeFiles/benchmark.dir/src/benchmark.cpp.s
+.PHONY : src/benchmark.cpp.s
 
 # Help Target
 help:
@@ -341,6 +417,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... run_tests"
+	@echo "... benchmark"
 	@echo "... cuda_ops"
 	@echo "... gmock"
 	@echo "... gmock_main"
@@ -348,10 +425,16 @@ help:
 	@echo "... gtest_main"
 	@echo "... test_bias_add"
 	@echo "... test_conv2d"
+	@echo "... test_dropout"
 	@echo "... test_matmul"
 	@echo "... test_maxpool2d"
 	@echo "... test_relu"
+	@echo "... test_sigmoid"
 	@echo "... test_softmax"
+	@echo "... test_tanh"
+	@echo "... src/benchmark.o"
+	@echo "... src/benchmark.i"
+	@echo "... src/benchmark.s"
 .PHONY : help
 
 

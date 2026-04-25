@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/test_tanh.dir/test_tanh.cpp.o -o ../bin/test_tanh   -L/usr/lib/x86_64-linux-gnu/stubs  libcuda_ops.a ../lib/libgtest.a ../lib/libgtest_main.a -lpthread /usr/lib/x86_64-linux-gnu/libcudart.so ../lib/libgtest.a -lcudadevrt -lcudart_static -lrt -lpthread -ldl 

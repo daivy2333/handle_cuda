@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda
+CMAKE_SOURCE_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/build
+CMAKE_BINARY_DIR = /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -142,14 +142,14 @@ install/strip/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/daivy/projects/handle_cuda/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/daivy/projects/handle_cuda/build/CMakeFiles /home/daivy/projects/handle_cuda/build/tests//CMakeFiles/progress.marks
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/daivy/projects/handle_cuda/build/CMakeFiles 0
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests//CMakeFiles/progress.marks
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/clean
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/clean
 .PHONY : clean
 
 # The main clean target
@@ -158,22 +158,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/preinstall
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/preinstall
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/daivy/projects/handle_cuda/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 tests/CMakeFiles/cuda_ops.dir/rule:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/cuda_ops.dir/rule
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/cuda_ops.dir/rule
 .PHONY : tests/CMakeFiles/cuda_ops.dir/rule
 
 # Convenience name for target.
@@ -182,12 +182,12 @@ cuda_ops: tests/CMakeFiles/cuda_ops.dir/rule
 
 # fast build rule for target.
 cuda_ops/fast:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/build
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/build
 .PHONY : cuda_ops/fast
 
 # Convenience name for target.
 tests/CMakeFiles/test_matmul.dir/rule:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_matmul.dir/rule
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_matmul.dir/rule
 .PHONY : tests/CMakeFiles/test_matmul.dir/rule
 
 # Convenience name for target.
@@ -196,12 +196,12 @@ test_matmul: tests/CMakeFiles/test_matmul.dir/rule
 
 # fast build rule for target.
 test_matmul/fast:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_matmul.dir/build.make tests/CMakeFiles/test_matmul.dir/build
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_matmul.dir/build.make tests/CMakeFiles/test_matmul.dir/build
 .PHONY : test_matmul/fast
 
 # Convenience name for target.
 tests/CMakeFiles/test_relu.dir/rule:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_relu.dir/rule
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_relu.dir/rule
 .PHONY : tests/CMakeFiles/test_relu.dir/rule
 
 # Convenience name for target.
@@ -210,12 +210,12 @@ test_relu: tests/CMakeFiles/test_relu.dir/rule
 
 # fast build rule for target.
 test_relu/fast:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_relu.dir/build.make tests/CMakeFiles/test_relu.dir/build
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_relu.dir/build.make tests/CMakeFiles/test_relu.dir/build
 .PHONY : test_relu/fast
 
 # Convenience name for target.
 tests/CMakeFiles/test_bias_add.dir/rule:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_bias_add.dir/rule
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_bias_add.dir/rule
 .PHONY : tests/CMakeFiles/test_bias_add.dir/rule
 
 # Convenience name for target.
@@ -224,12 +224,12 @@ test_bias_add: tests/CMakeFiles/test_bias_add.dir/rule
 
 # fast build rule for target.
 test_bias_add/fast:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_bias_add.dir/build.make tests/CMakeFiles/test_bias_add.dir/build
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_bias_add.dir/build.make tests/CMakeFiles/test_bias_add.dir/build
 .PHONY : test_bias_add/fast
 
 # Convenience name for target.
 tests/CMakeFiles/test_softmax.dir/rule:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_softmax.dir/rule
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_softmax.dir/rule
 .PHONY : tests/CMakeFiles/test_softmax.dir/rule
 
 # Convenience name for target.
@@ -238,12 +238,12 @@ test_softmax: tests/CMakeFiles/test_softmax.dir/rule
 
 # fast build rule for target.
 test_softmax/fast:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_softmax.dir/build.make tests/CMakeFiles/test_softmax.dir/build
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_softmax.dir/build.make tests/CMakeFiles/test_softmax.dir/build
 .PHONY : test_softmax/fast
 
 # Convenience name for target.
 tests/CMakeFiles/test_conv2d.dir/rule:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_conv2d.dir/rule
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_conv2d.dir/rule
 .PHONY : tests/CMakeFiles/test_conv2d.dir/rule
 
 # Convenience name for target.
@@ -252,12 +252,12 @@ test_conv2d: tests/CMakeFiles/test_conv2d.dir/rule
 
 # fast build rule for target.
 test_conv2d/fast:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_conv2d.dir/build.make tests/CMakeFiles/test_conv2d.dir/build
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_conv2d.dir/build.make tests/CMakeFiles/test_conv2d.dir/build
 .PHONY : test_conv2d/fast
 
 # Convenience name for target.
 tests/CMakeFiles/test_maxpool2d.dir/rule:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_maxpool2d.dir/rule
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_maxpool2d.dir/rule
 .PHONY : tests/CMakeFiles/test_maxpool2d.dir/rule
 
 # Convenience name for target.
@@ -266,15 +266,57 @@ test_maxpool2d: tests/CMakeFiles/test_maxpool2d.dir/rule
 
 # fast build rule for target.
 test_maxpool2d/fast:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_maxpool2d.dir/build.make tests/CMakeFiles/test_maxpool2d.dir/build
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_maxpool2d.dir/build.make tests/CMakeFiles/test_maxpool2d.dir/build
 .PHONY : test_maxpool2d/fast
+
+# Convenience name for target.
+tests/CMakeFiles/test_sigmoid.dir/rule:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_sigmoid.dir/rule
+.PHONY : tests/CMakeFiles/test_sigmoid.dir/rule
+
+# Convenience name for target.
+test_sigmoid: tests/CMakeFiles/test_sigmoid.dir/rule
+.PHONY : test_sigmoid
+
+# fast build rule for target.
+test_sigmoid/fast:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_sigmoid.dir/build.make tests/CMakeFiles/test_sigmoid.dir/build
+.PHONY : test_sigmoid/fast
+
+# Convenience name for target.
+tests/CMakeFiles/test_tanh.dir/rule:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_tanh.dir/rule
+.PHONY : tests/CMakeFiles/test_tanh.dir/rule
+
+# Convenience name for target.
+test_tanh: tests/CMakeFiles/test_tanh.dir/rule
+.PHONY : test_tanh
+
+# fast build rule for target.
+test_tanh/fast:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_tanh.dir/build.make tests/CMakeFiles/test_tanh.dir/build
+.PHONY : test_tanh/fast
+
+# Convenience name for target.
+tests/CMakeFiles/test_dropout.dir/rule:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_dropout.dir/rule
+.PHONY : tests/CMakeFiles/test_dropout.dir/rule
+
+# Convenience name for target.
+test_dropout: tests/CMakeFiles/test_dropout.dir/rule
+.PHONY : test_dropout
+
+# fast build rule for target.
+test_dropout/fast:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dropout.dir/build.make tests/CMakeFiles/test_dropout.dir/build
+.PHONY : test_dropout/fast
 
 __/src/bias_add.o: __/src/bias_add.cu.o
 .PHONY : __/src/bias_add.o
 
 # target to build an object file
 __/src/bias_add.cu.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.o
 .PHONY : __/src/bias_add.cu.o
 
 __/src/bias_add.i: __/src/bias_add.cu.i
@@ -282,7 +324,7 @@ __/src/bias_add.i: __/src/bias_add.cu.i
 
 # target to preprocess a source file
 __/src/bias_add.cu.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.i
 .PHONY : __/src/bias_add.cu.i
 
 __/src/bias_add.s: __/src/bias_add.cu.s
@@ -290,7 +332,7 @@ __/src/bias_add.s: __/src/bias_add.cu.s
 
 # target to generate assembly for a file
 __/src/bias_add.cu.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/bias_add.cu.s
 .PHONY : __/src/bias_add.cu.s
 
 __/src/conv2d.o: __/src/conv2d.cu.o
@@ -298,7 +340,7 @@ __/src/conv2d.o: __/src/conv2d.cu.o
 
 # target to build an object file
 __/src/conv2d.cu.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.o
 .PHONY : __/src/conv2d.cu.o
 
 __/src/conv2d.i: __/src/conv2d.cu.i
@@ -306,7 +348,7 @@ __/src/conv2d.i: __/src/conv2d.cu.i
 
 # target to preprocess a source file
 __/src/conv2d.cu.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.i
 .PHONY : __/src/conv2d.cu.i
 
 __/src/conv2d.s: __/src/conv2d.cu.s
@@ -314,15 +356,39 @@ __/src/conv2d.s: __/src/conv2d.cu.s
 
 # target to generate assembly for a file
 __/src/conv2d.cu.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/conv2d.cu.s
 .PHONY : __/src/conv2d.cu.s
+
+__/src/dropout.o: __/src/dropout.cu.o
+.PHONY : __/src/dropout.o
+
+# target to build an object file
+__/src/dropout.cu.o:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.o
+.PHONY : __/src/dropout.cu.o
+
+__/src/dropout.i: __/src/dropout.cu.i
+.PHONY : __/src/dropout.i
+
+# target to preprocess a source file
+__/src/dropout.cu.i:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.i
+.PHONY : __/src/dropout.cu.i
+
+__/src/dropout.s: __/src/dropout.cu.s
+.PHONY : __/src/dropout.s
+
+# target to generate assembly for a file
+__/src/dropout.cu.s:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/dropout.cu.s
+.PHONY : __/src/dropout.cu.s
 
 __/src/matmul.o: __/src/matmul.cu.o
 .PHONY : __/src/matmul.o
 
 # target to build an object file
 __/src/matmul.cu.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.o
 .PHONY : __/src/matmul.cu.o
 
 __/src/matmul.i: __/src/matmul.cu.i
@@ -330,7 +396,7 @@ __/src/matmul.i: __/src/matmul.cu.i
 
 # target to preprocess a source file
 __/src/matmul.cu.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.i
 .PHONY : __/src/matmul.cu.i
 
 __/src/matmul.s: __/src/matmul.cu.s
@@ -338,7 +404,7 @@ __/src/matmul.s: __/src/matmul.cu.s
 
 # target to generate assembly for a file
 __/src/matmul.cu.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/matmul.cu.s
 .PHONY : __/src/matmul.cu.s
 
 __/src/maxpool2d.o: __/src/maxpool2d.cu.o
@@ -346,7 +412,7 @@ __/src/maxpool2d.o: __/src/maxpool2d.cu.o
 
 # target to build an object file
 __/src/maxpool2d.cu.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.o
 .PHONY : __/src/maxpool2d.cu.o
 
 __/src/maxpool2d.i: __/src/maxpool2d.cu.i
@@ -354,7 +420,7 @@ __/src/maxpool2d.i: __/src/maxpool2d.cu.i
 
 # target to preprocess a source file
 __/src/maxpool2d.cu.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.i
 .PHONY : __/src/maxpool2d.cu.i
 
 __/src/maxpool2d.s: __/src/maxpool2d.cu.s
@@ -362,7 +428,7 @@ __/src/maxpool2d.s: __/src/maxpool2d.cu.s
 
 # target to generate assembly for a file
 __/src/maxpool2d.cu.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/maxpool2d.cu.s
 .PHONY : __/src/maxpool2d.cu.s
 
 __/src/relu.o: __/src/relu.cu.o
@@ -370,7 +436,7 @@ __/src/relu.o: __/src/relu.cu.o
 
 # target to build an object file
 __/src/relu.cu.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.o
 .PHONY : __/src/relu.cu.o
 
 __/src/relu.i: __/src/relu.cu.i
@@ -378,7 +444,7 @@ __/src/relu.i: __/src/relu.cu.i
 
 # target to preprocess a source file
 __/src/relu.cu.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.i
 .PHONY : __/src/relu.cu.i
 
 __/src/relu.s: __/src/relu.cu.s
@@ -386,15 +452,39 @@ __/src/relu.s: __/src/relu.cu.s
 
 # target to generate assembly for a file
 __/src/relu.cu.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/relu.cu.s
 .PHONY : __/src/relu.cu.s
+
+__/src/sigmoid.o: __/src/sigmoid.cu.o
+.PHONY : __/src/sigmoid.o
+
+# target to build an object file
+__/src/sigmoid.cu.o:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.o
+.PHONY : __/src/sigmoid.cu.o
+
+__/src/sigmoid.i: __/src/sigmoid.cu.i
+.PHONY : __/src/sigmoid.i
+
+# target to preprocess a source file
+__/src/sigmoid.cu.i:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.i
+.PHONY : __/src/sigmoid.cu.i
+
+__/src/sigmoid.s: __/src/sigmoid.cu.s
+.PHONY : __/src/sigmoid.s
+
+# target to generate assembly for a file
+__/src/sigmoid.cu.s:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/sigmoid.cu.s
+.PHONY : __/src/sigmoid.cu.s
 
 __/src/softmax.o: __/src/softmax.cu.o
 .PHONY : __/src/softmax.o
 
 # target to build an object file
 __/src/softmax.cu.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.o
 .PHONY : __/src/softmax.cu.o
 
 __/src/softmax.i: __/src/softmax.cu.i
@@ -402,7 +492,7 @@ __/src/softmax.i: __/src/softmax.cu.i
 
 # target to preprocess a source file
 __/src/softmax.cu.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.i
 .PHONY : __/src/softmax.cu.i
 
 __/src/softmax.s: __/src/softmax.cu.s
@@ -410,15 +500,39 @@ __/src/softmax.s: __/src/softmax.cu.s
 
 # target to generate assembly for a file
 __/src/softmax.cu.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/softmax.cu.s
 .PHONY : __/src/softmax.cu.s
+
+__/src/tanh.o: __/src/tanh.cu.o
+.PHONY : __/src/tanh.o
+
+# target to build an object file
+__/src/tanh.cu.o:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.o
+.PHONY : __/src/tanh.cu.o
+
+__/src/tanh.i: __/src/tanh.cu.i
+.PHONY : __/src/tanh.i
+
+# target to preprocess a source file
+__/src/tanh.cu.i:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.i
+.PHONY : __/src/tanh.cu.i
+
+__/src/tanh.s: __/src/tanh.cu.s
+.PHONY : __/src/tanh.s
+
+# target to generate assembly for a file
+__/src/tanh.cu.s:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/cuda_ops.dir/build.make tests/CMakeFiles/cuda_ops.dir/__/src/tanh.cu.s
+.PHONY : __/src/tanh.cu.s
 
 test_bias_add.o: test_bias_add.cpp.o
 .PHONY : test_bias_add.o
 
 # target to build an object file
 test_bias_add.cpp.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_bias_add.dir/build.make tests/CMakeFiles/test_bias_add.dir/test_bias_add.cpp.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_bias_add.dir/build.make tests/CMakeFiles/test_bias_add.dir/test_bias_add.cpp.o
 .PHONY : test_bias_add.cpp.o
 
 test_bias_add.i: test_bias_add.cpp.i
@@ -426,7 +540,7 @@ test_bias_add.i: test_bias_add.cpp.i
 
 # target to preprocess a source file
 test_bias_add.cpp.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_bias_add.dir/build.make tests/CMakeFiles/test_bias_add.dir/test_bias_add.cpp.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_bias_add.dir/build.make tests/CMakeFiles/test_bias_add.dir/test_bias_add.cpp.i
 .PHONY : test_bias_add.cpp.i
 
 test_bias_add.s: test_bias_add.cpp.s
@@ -434,7 +548,7 @@ test_bias_add.s: test_bias_add.cpp.s
 
 # target to generate assembly for a file
 test_bias_add.cpp.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_bias_add.dir/build.make tests/CMakeFiles/test_bias_add.dir/test_bias_add.cpp.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_bias_add.dir/build.make tests/CMakeFiles/test_bias_add.dir/test_bias_add.cpp.s
 .PHONY : test_bias_add.cpp.s
 
 test_conv2d.o: test_conv2d.cpp.o
@@ -442,7 +556,7 @@ test_conv2d.o: test_conv2d.cpp.o
 
 # target to build an object file
 test_conv2d.cpp.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_conv2d.dir/build.make tests/CMakeFiles/test_conv2d.dir/test_conv2d.cpp.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_conv2d.dir/build.make tests/CMakeFiles/test_conv2d.dir/test_conv2d.cpp.o
 .PHONY : test_conv2d.cpp.o
 
 test_conv2d.i: test_conv2d.cpp.i
@@ -450,7 +564,7 @@ test_conv2d.i: test_conv2d.cpp.i
 
 # target to preprocess a source file
 test_conv2d.cpp.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_conv2d.dir/build.make tests/CMakeFiles/test_conv2d.dir/test_conv2d.cpp.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_conv2d.dir/build.make tests/CMakeFiles/test_conv2d.dir/test_conv2d.cpp.i
 .PHONY : test_conv2d.cpp.i
 
 test_conv2d.s: test_conv2d.cpp.s
@@ -458,15 +572,39 @@ test_conv2d.s: test_conv2d.cpp.s
 
 # target to generate assembly for a file
 test_conv2d.cpp.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_conv2d.dir/build.make tests/CMakeFiles/test_conv2d.dir/test_conv2d.cpp.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_conv2d.dir/build.make tests/CMakeFiles/test_conv2d.dir/test_conv2d.cpp.s
 .PHONY : test_conv2d.cpp.s
+
+test_dropout.o: test_dropout.cpp.o
+.PHONY : test_dropout.o
+
+# target to build an object file
+test_dropout.cpp.o:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dropout.dir/build.make tests/CMakeFiles/test_dropout.dir/test_dropout.cpp.o
+.PHONY : test_dropout.cpp.o
+
+test_dropout.i: test_dropout.cpp.i
+.PHONY : test_dropout.i
+
+# target to preprocess a source file
+test_dropout.cpp.i:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dropout.dir/build.make tests/CMakeFiles/test_dropout.dir/test_dropout.cpp.i
+.PHONY : test_dropout.cpp.i
+
+test_dropout.s: test_dropout.cpp.s
+.PHONY : test_dropout.s
+
+# target to generate assembly for a file
+test_dropout.cpp.s:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_dropout.dir/build.make tests/CMakeFiles/test_dropout.dir/test_dropout.cpp.s
+.PHONY : test_dropout.cpp.s
 
 test_matmul.o: test_matmul.cpp.o
 .PHONY : test_matmul.o
 
 # target to build an object file
 test_matmul.cpp.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_matmul.dir/build.make tests/CMakeFiles/test_matmul.dir/test_matmul.cpp.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_matmul.dir/build.make tests/CMakeFiles/test_matmul.dir/test_matmul.cpp.o
 .PHONY : test_matmul.cpp.o
 
 test_matmul.i: test_matmul.cpp.i
@@ -474,7 +612,7 @@ test_matmul.i: test_matmul.cpp.i
 
 # target to preprocess a source file
 test_matmul.cpp.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_matmul.dir/build.make tests/CMakeFiles/test_matmul.dir/test_matmul.cpp.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_matmul.dir/build.make tests/CMakeFiles/test_matmul.dir/test_matmul.cpp.i
 .PHONY : test_matmul.cpp.i
 
 test_matmul.s: test_matmul.cpp.s
@@ -482,7 +620,7 @@ test_matmul.s: test_matmul.cpp.s
 
 # target to generate assembly for a file
 test_matmul.cpp.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_matmul.dir/build.make tests/CMakeFiles/test_matmul.dir/test_matmul.cpp.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_matmul.dir/build.make tests/CMakeFiles/test_matmul.dir/test_matmul.cpp.s
 .PHONY : test_matmul.cpp.s
 
 test_maxpool2d.o: test_maxpool2d.cpp.o
@@ -490,7 +628,7 @@ test_maxpool2d.o: test_maxpool2d.cpp.o
 
 # target to build an object file
 test_maxpool2d.cpp.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_maxpool2d.dir/build.make tests/CMakeFiles/test_maxpool2d.dir/test_maxpool2d.cpp.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_maxpool2d.dir/build.make tests/CMakeFiles/test_maxpool2d.dir/test_maxpool2d.cpp.o
 .PHONY : test_maxpool2d.cpp.o
 
 test_maxpool2d.i: test_maxpool2d.cpp.i
@@ -498,7 +636,7 @@ test_maxpool2d.i: test_maxpool2d.cpp.i
 
 # target to preprocess a source file
 test_maxpool2d.cpp.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_maxpool2d.dir/build.make tests/CMakeFiles/test_maxpool2d.dir/test_maxpool2d.cpp.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_maxpool2d.dir/build.make tests/CMakeFiles/test_maxpool2d.dir/test_maxpool2d.cpp.i
 .PHONY : test_maxpool2d.cpp.i
 
 test_maxpool2d.s: test_maxpool2d.cpp.s
@@ -506,7 +644,7 @@ test_maxpool2d.s: test_maxpool2d.cpp.s
 
 # target to generate assembly for a file
 test_maxpool2d.cpp.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_maxpool2d.dir/build.make tests/CMakeFiles/test_maxpool2d.dir/test_maxpool2d.cpp.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_maxpool2d.dir/build.make tests/CMakeFiles/test_maxpool2d.dir/test_maxpool2d.cpp.s
 .PHONY : test_maxpool2d.cpp.s
 
 test_relu.o: test_relu.cpp.o
@@ -514,7 +652,7 @@ test_relu.o: test_relu.cpp.o
 
 # target to build an object file
 test_relu.cpp.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_relu.dir/build.make tests/CMakeFiles/test_relu.dir/test_relu.cpp.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_relu.dir/build.make tests/CMakeFiles/test_relu.dir/test_relu.cpp.o
 .PHONY : test_relu.cpp.o
 
 test_relu.i: test_relu.cpp.i
@@ -522,7 +660,7 @@ test_relu.i: test_relu.cpp.i
 
 # target to preprocess a source file
 test_relu.cpp.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_relu.dir/build.make tests/CMakeFiles/test_relu.dir/test_relu.cpp.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_relu.dir/build.make tests/CMakeFiles/test_relu.dir/test_relu.cpp.i
 .PHONY : test_relu.cpp.i
 
 test_relu.s: test_relu.cpp.s
@@ -530,15 +668,39 @@ test_relu.s: test_relu.cpp.s
 
 # target to generate assembly for a file
 test_relu.cpp.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_relu.dir/build.make tests/CMakeFiles/test_relu.dir/test_relu.cpp.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_relu.dir/build.make tests/CMakeFiles/test_relu.dir/test_relu.cpp.s
 .PHONY : test_relu.cpp.s
+
+test_sigmoid.o: test_sigmoid.cpp.o
+.PHONY : test_sigmoid.o
+
+# target to build an object file
+test_sigmoid.cpp.o:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_sigmoid.dir/build.make tests/CMakeFiles/test_sigmoid.dir/test_sigmoid.cpp.o
+.PHONY : test_sigmoid.cpp.o
+
+test_sigmoid.i: test_sigmoid.cpp.i
+.PHONY : test_sigmoid.i
+
+# target to preprocess a source file
+test_sigmoid.cpp.i:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_sigmoid.dir/build.make tests/CMakeFiles/test_sigmoid.dir/test_sigmoid.cpp.i
+.PHONY : test_sigmoid.cpp.i
+
+test_sigmoid.s: test_sigmoid.cpp.s
+.PHONY : test_sigmoid.s
+
+# target to generate assembly for a file
+test_sigmoid.cpp.s:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_sigmoid.dir/build.make tests/CMakeFiles/test_sigmoid.dir/test_sigmoid.cpp.s
+.PHONY : test_sigmoid.cpp.s
 
 test_softmax.o: test_softmax.cpp.o
 .PHONY : test_softmax.o
 
 # target to build an object file
 test_softmax.cpp.o:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_softmax.dir/build.make tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.o
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_softmax.dir/build.make tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.o
 .PHONY : test_softmax.cpp.o
 
 test_softmax.i: test_softmax.cpp.i
@@ -546,7 +708,7 @@ test_softmax.i: test_softmax.cpp.i
 
 # target to preprocess a source file
 test_softmax.cpp.i:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_softmax.dir/build.make tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.i
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_softmax.dir/build.make tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.i
 .PHONY : test_softmax.cpp.i
 
 test_softmax.s: test_softmax.cpp.s
@@ -554,8 +716,32 @@ test_softmax.s: test_softmax.cpp.s
 
 # target to generate assembly for a file
 test_softmax.cpp.s:
-	cd /home/daivy/projects/handle_cuda/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_softmax.dir/build.make tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.s
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_softmax.dir/build.make tests/CMakeFiles/test_softmax.dir/test_softmax.cpp.s
 .PHONY : test_softmax.cpp.s
+
+test_tanh.o: test_tanh.cpp.o
+.PHONY : test_tanh.o
+
+# target to build an object file
+test_tanh.cpp.o:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_tanh.dir/build.make tests/CMakeFiles/test_tanh.dir/test_tanh.cpp.o
+.PHONY : test_tanh.cpp.o
+
+test_tanh.i: test_tanh.cpp.i
+.PHONY : test_tanh.i
+
+# target to preprocess a source file
+test_tanh.cpp.i:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_tanh.dir/build.make tests/CMakeFiles/test_tanh.dir/test_tanh.cpp.i
+.PHONY : test_tanh.cpp.i
+
+test_tanh.s: test_tanh.cpp.s
+.PHONY : test_tanh.s
+
+# target to generate assembly for a file
+test_tanh.cpp.s:
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/test_tanh.dir/build.make tests/CMakeFiles/test_tanh.dir/test_tanh.cpp.s
+.PHONY : test_tanh.cpp.s
 
 # Help Target
 help:
@@ -573,16 +759,22 @@ help:
 	@echo "... cuda_ops"
 	@echo "... test_bias_add"
 	@echo "... test_conv2d"
+	@echo "... test_dropout"
 	@echo "... test_matmul"
 	@echo "... test_maxpool2d"
 	@echo "... test_relu"
+	@echo "... test_sigmoid"
 	@echo "... test_softmax"
+	@echo "... test_tanh"
 	@echo "... __/src/bias_add.o"
 	@echo "... __/src/bias_add.i"
 	@echo "... __/src/bias_add.s"
 	@echo "... __/src/conv2d.o"
 	@echo "... __/src/conv2d.i"
 	@echo "... __/src/conv2d.s"
+	@echo "... __/src/dropout.o"
+	@echo "... __/src/dropout.i"
+	@echo "... __/src/dropout.s"
 	@echo "... __/src/matmul.o"
 	@echo "... __/src/matmul.i"
 	@echo "... __/src/matmul.s"
@@ -592,15 +784,24 @@ help:
 	@echo "... __/src/relu.o"
 	@echo "... __/src/relu.i"
 	@echo "... __/src/relu.s"
+	@echo "... __/src/sigmoid.o"
+	@echo "... __/src/sigmoid.i"
+	@echo "... __/src/sigmoid.s"
 	@echo "... __/src/softmax.o"
 	@echo "... __/src/softmax.i"
 	@echo "... __/src/softmax.s"
+	@echo "... __/src/tanh.o"
+	@echo "... __/src/tanh.i"
+	@echo "... __/src/tanh.s"
 	@echo "... test_bias_add.o"
 	@echo "... test_bias_add.i"
 	@echo "... test_bias_add.s"
 	@echo "... test_conv2d.o"
 	@echo "... test_conv2d.i"
 	@echo "... test_conv2d.s"
+	@echo "... test_dropout.o"
+	@echo "... test_dropout.i"
+	@echo "... test_dropout.s"
 	@echo "... test_matmul.o"
 	@echo "... test_matmul.i"
 	@echo "... test_matmul.s"
@@ -610,9 +811,15 @@ help:
 	@echo "... test_relu.o"
 	@echo "... test_relu.i"
 	@echo "... test_relu.s"
+	@echo "... test_sigmoid.o"
+	@echo "... test_sigmoid.i"
+	@echo "... test_sigmoid.s"
 	@echo "... test_softmax.o"
 	@echo "... test_softmax.i"
 	@echo "... test_softmax.s"
+	@echo "... test_tanh.o"
+	@echo "... test_tanh.i"
+	@echo "... test_tanh.s"
 .PHONY : help
 
 
@@ -624,6 +831,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/daivy/projects/handle_cuda/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

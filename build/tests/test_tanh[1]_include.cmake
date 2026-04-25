@@ -1,0 +1,5 @@
+if(EXISTS "/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/test_tanh[1]_tests.cmake")
+  include("/home/daivy/projects/handle_cuda/.claude/worktrees/cuda-ops-optimization/build/tests/test_tanh[1]_tests.cmake")
+else()
+  add_test(test_tanh_NOT_BUILT test_tanh_NOT_BUILT)
+endif()
