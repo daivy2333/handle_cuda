@@ -1,4 +1,4 @@
-# CUDA Deep Learning Operators
+# CUDA 深度学习算子
 
 > 🚀 纯 CUDA 实现的深度学习算子库，从零构建，支持完整神经网络训练
 
@@ -266,14 +266,14 @@ handle_cuda/
 
 ---
 
-## Next Steps
+## 下一步
 
 ### ✅ 已完成
 
 | 功能 | 状态 | 成果 |
 |------|------|------|
-| MLP 训练 | ✅ 完成 | 95.36% accuracy, 10.61x vs NumPy |
-| CNN 训练 | ✅ 完成 | 97.92% accuracy, im2col+GEMM优化 |
+| MLP 训练 | ✅ 完成 | 95.36% 准确率，10.61x vs NumPy |
+| CNN 训练 | ✅ 完成 | 97.92% 准确率，im2col+GEMM优化 |
 | 边界情况测试 | ✅ 完成 | 9 个新增测试，100% 通过 |
 | 预分配缓冲区优化 | ✅ 完成 | 消除 malloc/free，+27% 速度 |
 
@@ -296,10 +296,10 @@ handle_cuda/
 
 ---
 
-## 📝 License
+## 📝 许可证
 
 MIT License - 自由使用、修改、分发
 
 ---
 
-*Built with ❤️ using CUDA C++ and Python*
+*使用 CUDA C++ 和 Python 构建 ❤️*
