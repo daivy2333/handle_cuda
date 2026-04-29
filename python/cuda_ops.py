@@ -108,6 +108,41 @@ class CUDAOps:
         ]
         self.lib.cuda_softmax_backward_f32.restype = None
 
+        # Conv2d
+        self.lib.cuda_conv2d_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_conv2d_f32.restype = None
+
+        self.lib.cuda_conv2d_backward_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_conv2d_backward_f32.restype = None
+
+        # MaxPool2d
+        self.lib.cuda_maxpool2d_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_maxpool2d_f32.restype = None
+
+        self.lib.cuda_maxpool2d_backward_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_maxpool2d_backward_f32.restype = None
+
     def alloc(self, size):
         """Allocate GPU memory for size float32 elements."""
         return self.lib.cuda_alloc(size * 4)  # float32 = 4 bytes
@@ -289,6 +324,127 @@ class CUDAOps:
         self.lib.cuda_softmax_backward_f32(
             grad_out_ptr, forward_output_ptr, grad_in_ptr, batch, classes)
         return grad_in_ptr
+
+    def conv2d(self, input_ptr, weight_ptr, bias_ptr,
+               N, C, H, W, out_C, kernel_h, kernel_w,
+               stride_h=1, stride_w=1, pad_h=0, pad_w=0,
+               output_ptr=None):
+        """Pure CUDA Conv2d forward.
+
+        Args:
+            input_ptr: GPU pointer to input [N, C, H, W]
+            weight_ptr: GPU pointer to weight [out_C, C, kernel_h, kernel_w]
+            bias_ptr: GPU pointer to bias [out_C] (can be None)
+            N, C, H, W: input dimensions
+            out_C: output channels
+            kernel_h, kernel_w: kernel size
+            stride_h, stride_w: stride
+            pad_h, pad_w: padding
+
+        Returns:
+            output_ptr: GPU pointer to output [N, out_C, out_H, out_W]
+        """
+        out_H = (H + 2 * pad_h - kernel_h) // stride_h + 1
+        out_W = (W + 2 * pad_w - kernel_w) // stride_w + 1
+
+        if output_ptr is None:
+            output_ptr = self.alloc(N * out_C * out_H * out_W)
+
+        # Handle None bias
+        bias_arg = bias_ptr if bias_ptr is not None else None
+
+        self.lib.cuda_conv2d_f32(
+            input_ptr, weight_ptr, bias_arg, output_ptr,
+            N, C, H, W, out_C, kernel_h, kernel_w,
+            stride_h, stride_w, pad_h, pad_w
+        )
+        return output_ptr
+
+    def conv2d_backward(self, grad_out_ptr, input_ptr, weight_ptr,
+                        N, C, H, W, out_C, kernel_h, kernel_w,
+                        stride_h, stride_w, pad_h, pad_w,
+                        grad_input_ptr=None, grad_weight_ptr=None, grad_bias_ptr=None):
+        """Pure CUDA Conv2d backward.
+
+        Args:
+            grad_out_ptr: GPU pointer to gradient of output [N, out_C, out_H, out_W]
+            input_ptr: GPU pointer to forward input [N, C, H, W]
+            weight_ptr: GPU pointer to weight [out_C, C, kernel_h, kernel_w]
+            ... dimensions same as forward
+
+        Returns:
+            grad_input_ptr, grad_weight_ptr, grad_bias_ptr
+        """
+        if grad_input_ptr is None:
+            grad_input_ptr = self.alloc(N * C * H * W)
+        if grad_weight_ptr is None:
+            grad_weight_ptr = self.alloc(out_C * C * kernel_h * kernel_w)
+        if grad_bias_ptr is None:
+            grad_bias_ptr = self.alloc(out_C)
+
+        self.lib.cuda_conv2d_backward_f32(
+            grad_out_ptr, input_ptr, weight_ptr,
+            grad_input_ptr, grad_weight_ptr, grad_bias_ptr,
+            N, C, H, W, out_C, kernel_h, kernel_w,
+            stride_h, stride_w, pad_h, pad_w
+        )
+        return grad_input_ptr, grad_weight_ptr, grad_bias_ptr
+
+    def maxpool2d(self, input_ptr, N, C, H, W,
+                  kernel_h=2, kernel_w=2, stride_h=2, stride_w=2,
+                  pad_h=0, pad_w=0, output_ptr=None, indices_ptr=None):
+        """Pure CUDA MaxPool2d forward.
+
+        Args:
+            input_ptr: GPU pointer to input [N, C, H, W]
+            N, C, H, W: input dimensions
+            kernel_h, kernel_w: pooling window size
+            stride_h, stride_w: stride
+            pad_h, pad_w: padding
+
+        Returns:
+            output_ptr: GPU pointer to output [N, C, out_H, out_W]
+            indices_ptr: GPU pointer to indices [N, C, out_H, out_W] (int32)
+        """
+        out_H = (H + 2 * pad_h - kernel_h) // stride_h + 1
+        out_W = (W + 2 * pad_w - kernel_w) // stride_w + 1
+
+        if output_ptr is None:
+            output_ptr = self.alloc(N * C * out_H * out_W)
+        if indices_ptr is None:
+            # Allocate int32 indices (4 bytes each)
+            indices_ptr = self.lib.cuda_alloc(N * C * out_H * out_W * 4)
+
+        self.lib.cuda_maxpool2d_f32(
+            input_ptr, output_ptr, indices_ptr,
+            N, C, H, W, kernel_h, kernel_w,
+            stride_h, stride_w, pad_h, pad_w
+        )
+        return output_ptr, indices_ptr
+
+    def maxpool2d_backward(self, grad_out_ptr, indices_ptr, N, C, H, W,
+                           kernel_h, kernel_w, stride_h, stride_w,
+                           pad_h, pad_w, grad_input_ptr=None):
+        """Pure CUDA MaxPool2d backward.
+
+        Args:
+            grad_out_ptr: GPU pointer to gradient of output [N, C, out_H, out_W]
+            indices_ptr: GPU pointer to indices from forward pass
+            N, C, H, W: input dimensions
+            kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w: pooling params
+
+        Returns:
+            grad_input_ptr: GPU pointer to gradient of input [N, C, H, W]
+        """
+        if grad_input_ptr is None:
+            grad_input_ptr = self.alloc(N * C * H * W)
+
+        self.lib.cuda_maxpool2d_backward_f32(
+            grad_out_ptr, indices_ptr, grad_input_ptr,
+            N, C, H, W, kernel_h, kernel_w,
+            stride_h, stride_w, pad_h, pad_w
+        )
+        return grad_input_ptr
 
 
 def test_binding():
@@ -504,6 +660,88 @@ def test_binding():
     ops.free(grad_softmax_ptr)
     ops.free(grad_soft_in_ptr)
     print("   Softmax and backward: PASSED")
+
+    # Test conv2d
+    print("\n9. Testing conv2d...")
+    import torch
+    import torch.nn.functional as F
+
+    # Test: N=2, C=1, H=28, W=28, out_C=16, kernel=3, stride=1, pad=1
+    N, C, H, W = 2, 1, 28, 28
+    out_C = 16
+    kernel_h, kernel_w = 3, 3
+    stride_h, stride_w = 1, 1
+    pad_h, pad_w = 1, 1
+
+    # Create input and weights
+    input_np = np.random.randn(N, C, H, W).astype(np.float32)
+    weight_np = np.random.randn(out_C, C, kernel_h, kernel_w).astype(np.float32)
+    bias_np = np.random.randn(out_C).astype(np.float32)
+
+    # PyTorch reference
+    input_torch = torch.from_numpy(input_np)
+    weight_torch = torch.from_numpy(weight_np)
+    bias_torch = torch.from_numpy(bias_np)
+    output_torch = F.conv2d(input_torch, weight_torch, bias_torch,
+                           stride=(stride_h, stride_w), padding=(pad_h, pad_w))
+    output_np_ref = output_torch.numpy()
+
+    # CUDA implementation
+    input_ptr = ops.to_device(input_np)
+    weight_ptr = ops.to_device(weight_np)
+    bias_ptr = ops.to_device(bias_np)
+
+    output_ptr = ops.conv2d(input_ptr, weight_ptr, bias_ptr,
+                           N, C, H, W, out_C, kernel_h, kernel_w,
+                           stride_h, stride_w, pad_h, pad_w)
+
+    output_np = ops.to_host(output_ptr, (N, out_C, 28, 28))
+
+    # Compare
+    max_diff = np.abs(output_np - output_np_ref).max()
+    print(f"   Max diff vs PyTorch: {max_diff:.6f}")
+    assert max_diff < 1e-5, f"Conv2d output mismatch: {max_diff}"
+
+    ops.free(input_ptr)
+    ops.free(weight_ptr)
+    ops.free(bias_ptr)
+    ops.free(output_ptr)
+    print("   Conv2d forward: PASSED")
+
+    # Test maxpool2d
+    print("\n10. Testing maxpool2d...")
+    # Test: N=2, C=16, H=28, W=28, kernel=2, stride=2
+    N, C, H, W = 2, 16, 28, 28
+    kernel_h, kernel_w = 2, 2
+    stride_h, stride_w = 2, 2
+    pad_h, pad_w = 0, 0
+
+    # Create input
+    input_np = np.random.randn(N, C, H, W).astype(np.float32)
+
+    # PyTorch reference
+    input_torch = torch.from_numpy(input_np)
+    output_torch = F.max_pool2d(input_torch, kernel_size=(kernel_h, kernel_w),
+                                stride=(stride_h, stride_w), padding=(pad_h, pad_w))
+    output_np_ref = output_torch.numpy()
+
+    # CUDA implementation
+    input_ptr = ops.to_device(input_np)
+    output_ptr, indices_ptr = ops.maxpool2d(input_ptr, N, C, H, W,
+                                            kernel_h, kernel_w, stride_h, stride_w,
+                                            pad_h, pad_w)
+
+    output_np = ops.to_host(output_ptr, (N, C, 14, 14))
+
+    # Compare
+    max_diff = np.abs(output_np - output_np_ref).max()
+    print(f"   Max diff vs PyTorch: {max_diff:.6f}")
+    assert max_diff < 1e-5, f"MaxPool2d output mismatch: {max_diff}"
+
+    ops.free(input_ptr)
+    ops.free(output_ptr)
+    ops.lib.cuda_free(indices_ptr)
+    print("   MaxPool2d forward: PASSED")
 
     print("\n" + "="*50)
     print("All binding tests passed!")

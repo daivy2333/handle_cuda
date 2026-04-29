@@ -43,6 +43,8 @@ add_library(cuda_ops_shared SHARED
     src/cross_entropy.cu
     src/sgd_update.cu
     src/flatten.cu
+    src/conv2d.cu
+    src/maxpool2d.cu
 )
 target_include_directories(cuda_ops_shared PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(cuda_ops_shared CUDA::cudart)
