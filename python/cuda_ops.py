@@ -740,8 +740,131 @@ def test_binding():
 
     ops.free(input_ptr)
     ops.free(output_ptr)
+    # Note: indices are int32, so we use cuda_free directly (not self.free which assumes float32)
     ops.lib.cuda_free(indices_ptr)
     print("   MaxPool2d forward: PASSED")
+
+    # Test conv2d backward
+    print("\n11. Testing conv2d backward...")
+    N, C, H, W = 2, 1, 28, 28
+    out_C, kernel = 16, 3
+    stride, pad = 1, 1
+
+    input_np = np.random.randn(N, C, H, W).astype(np.float32)
+    weight_np = np.random.randn(out_C, C, kernel, kernel).astype(np.float32)
+    bias_np = np.random.randn(out_C).astype(np.float32)
+
+    # PyTorch reference with autograd
+    input_torch = torch.from_numpy(input_np).requires_grad_(True)
+    weight_torch = torch.from_numpy(weight_np).requires_grad_(True)
+    bias_torch = torch.from_numpy(bias_np).requires_grad_(True)
+    output_torch = F.conv2d(input_torch, weight_torch, bias_torch, stride=stride, padding=pad)
+    grad_out_torch = torch.randn_like(output_torch)
+    output_torch.backward(grad_out_torch)
+
+    # CUDA backward
+    input_ptr = ops.to_device(input_np)
+    weight_ptr = ops.to_device(weight_np)
+    bias_ptr = ops.to_device(bias_np)
+    output_ptr = ops.conv2d(input_ptr, weight_ptr, bias_ptr, N, C, H, W, out_C, kernel, kernel, stride, stride, pad, pad)
+    grad_out_ptr = ops.to_device(grad_out_torch.detach().numpy())
+
+    grad_in_ptr, grad_w_ptr, grad_b_ptr = ops.conv2d_backward(grad_out_ptr, input_ptr, weight_ptr, N, C, H, W, out_C, kernel, kernel, stride, stride, pad, pad)
+
+    # Compare
+    grad_in_result = ops.to_host(grad_in_ptr, input_np.shape)
+    grad_w_result = ops.to_host(grad_w_ptr, weight_np.shape)
+    grad_b_result = ops.to_host(grad_b_ptr, (out_C,))
+
+    max_diff_in = np.abs(grad_in_result - input_torch.grad.numpy()).max()
+    max_diff_w = np.abs(grad_w_result - weight_torch.grad.numpy()).max()
+    max_diff_b = np.abs(grad_b_result - bias_torch.grad.numpy()).max()
+
+    print(f"   Max diff grad_input vs PyTorch: {max_diff_in:.6f}")
+    print(f"   Max diff grad_weight vs PyTorch: {max_diff_w:.6f}")
+    print(f"   Max diff grad_bias vs PyTorch: {max_diff_b:.6f}")
+
+    assert max_diff_in < 1e-3, f"Conv2d backward grad_input mismatch: {max_diff_in}"
+    assert max_diff_w < 1e-3, f"Conv2d backward grad_weight mismatch: {max_diff_w}"
+    assert max_diff_b < 1e-3, f"Conv2d backward grad_bias mismatch: {max_diff_b}"
+
+    ops.free(input_ptr)
+    ops.free(weight_ptr)
+    ops.free(bias_ptr)
+    ops.free(output_ptr)
+    ops.free(grad_out_ptr)
+    ops.free(grad_in_ptr)
+    ops.free(grad_w_ptr)
+    ops.free(grad_b_ptr)
+    print("   Conv2d backward: PASSED")
+
+    # Test conv2d with None bias
+    print("\n12. Testing conv2d with None bias...")
+    N, C, H, W = 2, 1, 28, 28
+    out_C, kernel = 16, 3
+    stride, pad = 1, 1
+
+    input_np = np.random.randn(N, C, H, W).astype(np.float32)
+    weight_np = np.random.randn(out_C, C, kernel, kernel).astype(np.float32)
+
+    # PyTorch reference without bias
+    input_torch = torch.from_numpy(input_np)
+    weight_torch = torch.from_numpy(weight_np)
+    output_torch = F.conv2d(input_torch, weight_torch, bias=None, stride=stride, padding=pad)
+    output_np_ref = output_torch.numpy()
+
+    # CUDA implementation with None bias
+    input_ptr = ops.to_device(input_np)
+    weight_ptr = ops.to_device(weight_np)
+
+    output_ptr = ops.conv2d(input_ptr, weight_ptr, None, N, C, H, W, out_C, kernel, kernel, stride, stride, pad, pad)
+    output_np = ops.to_host(output_ptr, (N, out_C, 28, 28))
+
+    max_diff = np.abs(output_np - output_np_ref).max()
+    print(f"   Max diff vs PyTorch (no bias): {max_diff:.6f}")
+    assert max_diff < 1e-5, f"Conv2d (no bias) output mismatch: {max_diff}"
+
+    ops.free(input_ptr)
+    ops.free(weight_ptr)
+    ops.free(output_ptr)
+    print("   Conv2d with None bias: PASSED")
+
+    # Test maxpool2d backward
+    print("\n13. Testing maxpool2d backward...")
+    N, C, H, W = 2, 16, 28, 28
+    kernel_h, kernel_w = 2, 2
+    stride_h, stride_w = 2, 2
+    pad_h, pad_w = 0, 0
+
+    input_np = np.random.randn(N, C, H, W).astype(np.float32)
+
+    # PyTorch reference with autograd
+    input_torch = torch.from_numpy(input_np).requires_grad_(True)
+    output_torch = F.max_pool2d(input_torch, kernel_size=(kernel_h, kernel_w), stride=(stride_h, stride_w), padding=(pad_h, pad_w))
+    grad_out_torch = torch.randn_like(output_torch)
+    output_torch.backward(grad_out_torch)
+
+    # CUDA forward + backward
+    input_ptr = ops.to_device(input_np)
+    output_ptr, indices_ptr = ops.maxpool2d(input_ptr, N, C, H, W, kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w)
+
+    out_H = (H + 2 * pad_h - kernel_h) // stride_h + 1
+    out_W = (W + 2 * pad_w - kernel_w) // stride_w + 1
+    grad_out_ptr = ops.to_device(grad_out_torch.detach().numpy())
+    grad_in_ptr = ops.maxpool2d_backward(grad_out_ptr, indices_ptr, N, C, H, W, kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w)
+
+    grad_in_result = ops.to_host(grad_in_ptr, input_np.shape)
+
+    max_diff = np.abs(grad_in_result - input_torch.grad.numpy()).max()
+    print(f"   Max diff grad_input vs PyTorch: {max_diff:.6f}")
+    assert max_diff < 1e-5, f"MaxPool2d backward mismatch: {max_diff}"
+
+    ops.free(input_ptr)
+    ops.free(output_ptr)
+    ops.lib.cuda_free(indices_ptr)
+    ops.free(grad_out_ptr)
+    ops.free(grad_in_ptr)
+    print("   MaxPool2d backward: PASSED")
 
     print("\n" + "="*50)
     print("All binding tests passed!")
