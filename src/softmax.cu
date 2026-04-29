@@ -63,16 +63,27 @@ __global__ void softmax_warp_kernel(const float* input, float* output,
     }
     max_val = warp_reduce_max(max_val);
 
-    // Compute exp and sum
+    // Compute exp and sum (handle +Inf specially)
     float sum = 0.0f;
+    bool has_pos_inf = isinf(max_val) && max_val > 0;
+
     for (int i = lane; i < num_classes; i += 32) {
-        sum += expf(input_row[i] - max_val);
+        if (has_pos_inf) {
+            // +Inf case: position with Inf gets 1, others get 0
+            sum += (input_row[i] == max_val) ? 1.0f : 0.0f;
+        } else {
+            sum += expf(input_row[i] - max_val);
+        }
     }
     sum = warp_reduce_sum(sum);
 
     // Write output
     for (int i = lane; i < num_classes; i += 32) {
-        output_row[i] = expf(input_row[i] - max_val) / sum;
+        if (has_pos_inf) {
+            output_row[i] = (input_row[i] == max_val) ? 1.0f : 0.0f;
+        } else {
+            output_row[i] = expf(input_row[i] - max_val) / sum;
+        }
     }
 }
 

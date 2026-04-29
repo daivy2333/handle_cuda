@@ -253,6 +253,49 @@ handle_cuda/
 
 ---
 
+## Next Steps
+
+### CNN 训练扩展
+
+Conv2d 算子已实现并达到 **921 GFLOPS**，可扩展为完整 CNN 训练流程：
+
+```python
+# model_cnn_cuda.py (待实现)
+class SimpleCNN:
+    def __init__(self):
+        self.conv1 = Conv2d(1, 16, 3)   # MNIST: 28x28 -> 28x28
+        self.conv2 = Conv2d(16, 32, 3)  # 14x14 -> 14x14 (after pool)
+        self.fc = Linear(32*7*7, 10)
+    
+    def forward(self, x):
+        x = relu(self.conv1(x))
+        x = maxpool2d(x, 2)
+        x = relu(self.conv2(x))
+        x = maxpool2d(x, 2)
+        x = flatten(x)
+        x = softmax(self.fc(x))
+        return x
+```
+
+预期 CNN 训练效果：MNIST 准确率可达 **98%+**。
+
+### 扩展方向
+
+| 方向 | 描述 | 预期收益 |
+|------|------|---------|
+| **FP16 Inference** | 修改 kernel 支持 `half` 精度 | 推理速度 ~2x |
+| **BatchNorm/LayerNorm** | 添加归一化算子 | 支持更深的网络 |
+| **Attention** | Transformer 核心算子 | 支持 LLM 架构 |
+| **性能回归测试** | 在 `tests/` 添加 benchmark 阈值 | 防止优化退化 |
+
+### 与其他项目的关联
+
+本项目与 [riscv-bsv-processor](https://github.com/yourname/riscv-bsv-processor) 共同探索底层硬件加速：
+- CUDA 的 warp-level reduction 思路可借鉴到 RISC-V V 扩展（RVV）
+- 两者都关注：内存访问优化、并行归约、分块计算
+
+---
+
 ## 📝 License
 
 MIT License - 自由使用、修改、分发

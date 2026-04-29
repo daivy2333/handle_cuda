@@ -6,7 +6,8 @@ namespace {
 __global__ void relu_kernel(float* data, size_t size) {
     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
-        data[idx] = fmaxf(0.0f, data[idx]);
+        float val = data[idx];
+        data[idx] = (val > 0.0f || isnan(val)) ? val : 0.0f;
     }
 }
 
@@ -17,15 +18,16 @@ __global__ void relu_vectorized_kernel(float* data, size_t size) {
     if (vec_idx + 4 <= size) {
         float a, b, c, d;
         load_float4(data + vec_idx, a, b, c, d);
-        a = fmaxf(0.0f, a);
-        b = fmaxf(0.0f, b);
-        c = fmaxf(0.0f, c);
-        d = fmaxf(0.0f, d);
+        a = (a > 0.0f || isnan(a)) ? a : 0.0f;
+        b = (b > 0.0f || isnan(b)) ? b : 0.0f;
+        c = (c > 0.0f || isnan(c)) ? c : 0.0f;
+        d = (d > 0.0f || isnan(d)) ? d : 0.0f;
         store_float4(data + vec_idx, a, b, c, d);
     } else {
         // Handle remaining elements
         for (int i = 0; i < 4 && vec_idx + i < size; ++i) {
-            data[vec_idx + i] = fmaxf(0.0f, data[vec_idx + i]);
+            float val = data[vec_idx + i];
+            data[vec_idx + i] = (val > 0.0f || isnan(val)) ? val : 0.0f;
         }
     }
 }
