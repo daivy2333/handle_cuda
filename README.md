@@ -268,6 +268,18 @@ CNN 架构：
 - Conv2(16→32, 3x3) → ReLU → MaxPool(2x2)
 - Flatten → FC(1568→10)
 
+**性能成果：**
+- 最终准确率：**97.92%**（10 epochs）
+- 训练速度：~1000 samples/s，每epoch约60秒
+- 总训练时间：11分36秒
+
+**优化历程：**
+| 优化 | 技术 | 性能提升 |
+|------|------|---------|
+| im2col + GEMM | 卷积转换为矩阵乘法 | 190 → 900 samples/s (+4.7x) |
+| Tiled transpose matmul | 32x32 shared memory | backward速度 +50% |
+| 预分配缓冲区 | 消除每batch malloc/free | 900 → 1000 samples/s (+27%) |
+
 ### 进一步扩展方向
 
 | 方向 | 描述 | 预期收益 |
