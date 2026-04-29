@@ -31,7 +31,9 @@ handle_cuda/
 │   ├── performance_comparison.py
 │   └── mnist_data.py      # Data loader
 │
-├── tests/                 # GoogleTest (50 tests)
+├── tests/                 # GoogleTest (59 tests, 100% pass)
+│   ├── test_edge_cases.cpp # Boundary tests (9 tests)
+│   └── ...                 # Operator tests
 │
 └── docs/
     ├── PERFORMANCE_METRICS.md
@@ -122,5 +124,6 @@ float4 data = *reinterpret_cast<float4*>(ptr);
 
 1. **单算子单文件** - 每个算子一个 `.cu` 文件，便于维护
 2. **零外部依赖** - 仅依赖 CUDA Toolkit 和 GoogleTest
-3. **测试驱动** - 50 个单元测试，覆盖 forward/backward
+3. **测试驱动** - 59 个单元测试，覆盖 forward/backward + 边界场景
 4. **可验证** - 与 PyTorch 数值对比，误差 < 1e-6
+5. **边界覆盖** - NaN/Inf、显存压力、batch=1、非方阵矩阵

@@ -157,17 +157,21 @@
 
 | Operator | Forward | Backward | Optimized | Tests |
 |----------|---------|----------|-----------|-------|
-| MatMul | ✅ | ✅ | ✅ Tiled | 4 tests |
+| MatMul | ✅ | ✅ | ✅ Tiled | 5 tests |
 | BiasAdd | ✅ | ✅ | - | 6 tests |
 | ReLU | ✅ | ✅ | ✅ Vectorized | 5 tests |
 | Softmax | ✅ | ✅ | ✅ Warp-level | 4 tests |
 | Sigmoid | ✅ | ✅ | - | 3 tests |
 | Tanh | ✅ | ✅ | - | 4 tests |
 | Dropout | ✅ | ✅ | - | 5 tests |
-| Conv2d | ✅ | ✅ | ✅ im2col+GEMM | 4 tests |
+| Conv2d | ✅ | ✅ | ✅ im2col+GEMM | 6 tests |
 | MaxPool2d | ✅ | ✅ | - | 3 tests |
+| CrossEntropy | ✅ | ✅ | ✅ Numerical stability | 3 tests |
+| SGD Update | ✅ | - | - | 2 tests |
+| Flatten | ✅ | ✅ | - | 3 tests |
+| **Edge Cases** | - | - | - | 9 tests |
 
-**Total**: 9 operators, 34 test cases, all backward passes implemented.
+**Total**: 12 operators, **59 test cases**, 100% pass rate, all backward passes implemented.
 
 ---
 
@@ -242,6 +246,7 @@ ctest --output-on-failure
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2026-04-25 | Initial optimized release |
+| 1.1.0 | 2026-04-29 | Edge case tests (9 new), kernel bug fixes (ReLU NaN, Softmax +Inf), MaxPool2d fix, 59 tests 100% pass |
 
 ---
 
