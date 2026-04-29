@@ -33,13 +33,15 @@ def train_cnn():
     lr = 0.01
     epochs = 10
     num_batches = train_images.shape[0] // batch_size
-    progress_interval = 100  # Print progress every N batches
+    progress_interval = 50  # Print progress every N batches
 
     print(f"      Batch size: {batch_size}")
     print(f"      Learning rate: {lr}")
     print(f"      Epochs: {epochs}")
     print(f"      Batches per epoch: {num_batches}")
     print(f"      Progress interval: every {progress_interval} batches")
+    print(f"      Expected time per batch: ~0.10s (forward 0.05s + backward 0.05s)")
+    print(f"      Expected epoch time: ~{num_batches * 0.10 / 60:.1f} min")
 
     # Pre-allocate batch buffer
     x_batch_ptr = ops.alloc(batch_size * 1 * 28 * 28)
@@ -74,8 +76,9 @@ def train_cnn():
             batch_time = time.time() - batch_start
             batch_times.append(batch_time)
 
-            # Progress output
-            if (i + 1) % progress_interval == 0 or i == 0 or i == num_batches - 1:
+            # Progress output - every batch for first epoch, then every 50
+            progress_freq = 1 if epoch == 0 else 50
+            if (i + 1) % progress_freq == 0 or i == 0 or i == num_batches - 1:
                 avg_batch_time = np.mean(batch_times[-100:]) if len(batch_times) >= 100 else np.mean(batch_times)
                 samples_per_sec = batch_size / avg_batch_time
                 batches_done = i + 1
@@ -92,7 +95,7 @@ def train_cnn():
                       f"{batches_done:4d}/{num_batches} | "
                       f"Loss: {epoch_loss/batches_done:.4f} | "
                       f"Speed: {samples_per_sec:6.0f} samples/s | "
-                      f"ETA: {format_time(eta_sec)}")
+                      f"ETA: {format_time(eta_sec)}", flush=True)
 
         # Epoch summary
         epoch_time = time.time() - epoch_start
