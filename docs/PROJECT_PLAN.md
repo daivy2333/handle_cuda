@@ -60,6 +60,8 @@
 
 ### 🎯 项目状态
 - **12 个算子**，forward + backward 全部实现
+- **Conv2d/MaxPool2d Python binding**，支持 CNN 训练
+- **SimpleCNN_CUDA 模型**，完整 2-Conv CNN 训练流程
 - **59 个测试**，100% 通过率
 - **10.61x 性能提升** vs NumPy 实现
 

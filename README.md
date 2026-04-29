@@ -255,31 +255,20 @@ handle_cuda/
 
 ## Next Steps
 
-### CNN 训练扩展
+### ✅ CNN 训练扩展 (已完成)
 
-Conv2d 算子已实现并达到 **921 GFLOPS**，可扩展为完整 CNN 训练流程：
+Conv2d/MaxPool2d Python binding 和 CNN 模型已实现。运行训练：
 
-```python
-# model_cnn_cuda.py (待实现)
-class SimpleCNN:
-    def __init__(self):
-        self.conv1 = Conv2d(1, 16, 3)   # MNIST: 28x28 -> 28x28
-        self.conv2 = Conv2d(16, 32, 3)  # 14x14 -> 14x14 (after pool)
-        self.fc = Linear(32*7*7, 10)
-    
-    def forward(self, x):
-        x = relu(self.conv1(x))
-        x = maxpool2d(x, 2)
-        x = relu(self.conv2(x))
-        x = maxpool2d(x, 2)
-        x = flatten(x)
-        x = softmax(self.fc(x))
-        return x
+```bash
+cd python && python train_mnist_cnn_cuda.py
 ```
 
-预期 CNN 训练效果：MNIST 准确率可达 **98%+**。
+CNN 架构：
+- Conv1(1→16, 3x3) → ReLU → MaxPool(2x2)
+- Conv2(16→32, 3x3) → ReLU → MaxPool(2x2)
+- Flatten → FC(1568→10)
 
-### 扩展方向
+### 进一步扩展方向
 
 | 方向 | 描述 | 预期收益 |
 |------|------|---------|
