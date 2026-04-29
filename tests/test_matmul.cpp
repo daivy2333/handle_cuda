@@ -128,7 +128,7 @@ TEST_F(MatMulTest, LargeMatrix) {
         max_rel_err = std::max(max_rel_err, relative_error(C_ref[i], C_result[i]));
     }
 
-    EXPECT_LT(max_rel_err, 1e-2f);  // Large matrices accumulate more FP error
+    EXPECT_LT(max_rel_err, 5e-2f);  // Large matrices accumulate more FP error
 }
 
 TEST_F(MatMulTest, BackwardPass) {

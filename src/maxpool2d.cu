@@ -66,16 +66,17 @@ __global__ void maxpool2d_backward_kernel(const float* grad_out, const float* in
 
 void cuda_maxpool2d(const float* input, float* output, int* indices,
                      const Pool2dDesc& desc, cudaStream_t stream) {
-    int out_W = desc.W / desc.stride_w;
-    int total_h = desc.H / desc.stride_h;
+    int out_W = (desc.W + 2 * desc.pad_w - desc.kernel_w) / desc.stride_w + 1;
+    int out_H = (desc.H + 2 * desc.pad_h - desc.kernel_h) / desc.stride_h + 1;
+    int total_h = out_H;
 
-    dim3 block_dim(16, 16);
+    dim3 block_dim(1, 1);
     dim3 grid_dim(total_h * out_W, desc.C, desc.N);
 
     maxpool2d_kernel<<<grid_dim, block_dim, 0, stream>>>(
         input, output, indices,
         desc.N, desc.C, desc.H, desc.W,
-        desc.H / desc.stride_h, desc.W / desc.stride_w,
+        out_H, out_W,
         desc.kernel_h, desc.kernel_w,
         desc.stride_h, desc.stride_w,
         desc.pad_h, desc.pad_w);
@@ -85,11 +86,11 @@ void cuda_maxpool2d(const float* input, float* output, int* indices,
 
 void cuda_maxpool2d_backward(const float* grad_out, const float* input, const int* indices,
                                float* grad_in, const Pool2dDesc& desc, cudaStream_t stream) {
-    int out_W = desc.W / desc.stride_w;
-    int out_H = desc.H / desc.stride_h;
+    int out_W = (desc.W + 2 * desc.pad_w - desc.kernel_w) / desc.stride_w + 1;
+    int out_H = (desc.H + 2 * desc.pad_h - desc.kernel_h) / desc.stride_h + 1;
     int total_h = out_H;
 
-    dim3 block_dim(16, 16);
+    dim3 block_dim(1, 1);  // One thread per output pixel
     dim3 grid_dim(total_h * out_W, desc.C, desc.N);
 
     maxpool2d_backward_kernel<<<grid_dim, block_dim, 0, stream>>>(

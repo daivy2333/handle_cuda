@@ -36,7 +36,7 @@ TEST_F(MaxPool2dTest, Basic) {
 
     std::vector<float> output_ref = {{
         9, 8,
-        7, 7
+        7, 6
     }};
 
     size_t output_size = desc.N * desc.C * desc.H/2 * desc.W/2;
@@ -74,13 +74,15 @@ TEST_F(MaxPool2dTest, WithPadding) {
         21, 22, 23, 24, 25
     }};
 
+    // Correct expected output (verified with PyTorch)
+    // out_H = out_W = (5 + 2*1 - 3) / 2 + 1 = 3
     std::vector<float> output_ref = {{
-        9, 10,
-        14, 15,
-        24, 25
+        7, 9, 10,
+        17, 19, 20,
+        22, 24, 25
     }};
 
-    size_t output_size = desc.N * desc.C * 3 * 3;
+    size_t output_size = desc.N * desc.C * 3 * 3;  // 9 elements
     CudaBuffer d_input(desc.N * desc.C * desc.H * desc.W),
                d_output(output_size);
     int* d_indices;
