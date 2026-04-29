@@ -373,13 +373,32 @@ void cuda_conv2d_backward(const float* grad_out, const float* input, const float
         reshape_grad_for_backward_kernel<<<reshape_blocks, 256, 0, stream>>>(
             grad_out, reshaped_grad, N, out_C, out_H, out_W);
 
-        // Step 2: grad_weight (naive - small tensor, fast enough)
-        // Actually we can optimize this too, but let's focus on the main bottleneck first
-        dim3 grid_weight(K * K, C, out_C);
-        dim3 block_weight(16, 16);
-        conv2d_backward_weight_kernel<<<grid_weight, block_weight, 0, stream>>>(
-            grad_out, input, grad_weight, N, C, H, W, out_C, out_H, out_W,
-            K, K, 1, 1, desc.pad_h, desc.pad_w);
+        // Step 2: grad_weight = reshaped_grad @ im2col(input)^T
+        // First compute im2col(input)
+        float* col_buffer = nullptr;
+        size_t col_buffer_size = col_rows * col_cols * sizeof(float);
+        cudaMalloc(&col_buffer, col_buffer_size);
+
+        int total_col = col_rows * col_cols;
+        int col_blocks = (total_col + 255) / 256;
+        im2col_kernel<<<col_blocks, 256, 0, stream>>>(
+            input, col_buffer, N, C, H, W, out_H, out_W, K, K,
+            desc.pad_h, desc.pad_w, 1, 1);
+
+        // grad_weight = reshaped_grad @ col_buffer^T
+        // reshaped_grad: [out_C, col_cols]
+        // col_buffer: [col_rows, col_cols]
+        // grad_weight: [out_C, col_rows]
+        MatMulDesc weight_grad_desc;
+        weight_grad_desc.M = out_C;          // output rows
+        weight_grad_desc.N = col_rows;       // output cols
+        weight_grad_desc.K = col_cols;       // reduction dim
+        weight_grad_desc.transpose_a = false;
+        weight_grad_desc.transpose_b = true; // transpose col_buffer
+
+        cuda_matmul(reshaped_grad, col_buffer, grad_weight, weight_grad_desc, stream);
+
+        cudaFree(col_buffer);
 
         // Step 3: col_grad = weight^T @ reshaped_grad
         // weight: [out_C, col_rows]

@@ -40,8 +40,8 @@ def train_cnn():
     print(f"      Epochs: {epochs}")
     print(f"      Batches per epoch: {num_batches}")
     print(f"      Progress interval: every {progress_interval} batches")
-    print(f"      Expected time per batch: ~0.10s (forward 0.05s + backward 0.05s)")
-    print(f"      Expected epoch time: ~{num_batches * 0.10 / 60:.1f} min")
+    print(f"      Expected time per batch: ~0.07s (forward 0.05s + backward 0.02s)")
+    print(f"      Expected epoch time: ~1.1 min")
 
     # Pre-allocate batch buffer
     x_batch_ptr = ops.alloc(batch_size * 1 * 28 * 28)
