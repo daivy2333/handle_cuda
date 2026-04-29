@@ -13,11 +13,11 @@
 
 | 特性 | 描述 |
 |------|------|
-| 🔥 **纯 CUDA 实现** | 9 个核心算子，forward + backward 全部在 GPU 上执行 |
-| ⚡ **高性能优化** | Shared Memory Tiling、Warp-Level Reduction、Vectorized Access |
-| 🎯 **完整训练流程** | MNIST MLP 训练达到 **95.36%** 准确率 |
+| 🔥 **纯 CUDA 实现** | 12 个核心算子，forward + backward 全部在 GPU 上执行 |
+| ⚡ **高性能优化** | Shared Memory Tiling、Warp-Level Reduction、im2col + GEMM |
+| 🎯 **完整训练流程** | MNIST MLP **95.36%** / CNN **97.92%** 准确率 |
 | ✅ **正确性验证** | 与 PyTorch 对比，数值误差 < 1e-6 |
-| 📊 **性能可视化** | 纯 CUDA 比 NumPy 实现快 **10.61x** |
+| 📊 **59 个测试** | 100% 通过率，覆盖所有算子和边界情况 |
 
 ---
 
@@ -94,14 +94,29 @@ Epoch 10: loss=0.1550, acc=95.36%  ⬅️ 最终准确率
 训练时间: 8.24 秒 (10 epochs, batch_size=64)
 ```
 
-### 训练流程
+### MNIST CNN (2-Conv)
 
 ```
-数据加载 (CPU) → GPU 复制 → Forward (GPU) → Backward (GPU) → Update (GPU)
-                    ↑                                              ↓
-              仅此一处                              权重/梯度永远在 GPU
-             CPU→GPU                                无数据传输
+Layer: Conv1(1→16, 3x3) → ReLU → MaxPool(2x2)
+       Conv2(16→32, 3x3) → ReLU → MaxPool(2x2)
+       Flatten → FC(1568→10)
+
+Epoch  1: loss=0.47, acc=91.31%
+Epoch  5: loss=0.13, acc=96.75%
+Epoch 10: loss=0.07, acc=97.92%  ⬅️ 最终准确率
+
+训练时间: 11分36秒 (10 epochs, batch_size=64)
+速度: ~1000 samples/s
 ```
+
+### 与 PyTorch 对比
+
+| 模型 | 纯 CUDA | PyTorch (GPU) | 差距 |
+|------|---------|---------------|------|
+| MLP | 95.36% (8.24s) | ~95% (est.) | 相当 |
+| CNN | 97.92% (11m36s) | 97.34% (14.8s) | CUDA准确率+0.58%，速度差42x |
+
+> 💡 速度差距源于 PyTorch 使用 cuDNN/Tensor Core，我们的实现是纯 FP32 教育性实现
 
 ---
 
@@ -119,7 +134,7 @@ mkdir build && cd build
 cmake ..
 make -j$(nproc)
 
-# 运行 C++ 单元测试 (50 tests)
+# 运行 C++ 单元测试 (59 tests)
 ctest --output-on-failure
 ```
 
@@ -129,24 +144,14 @@ ctest --output-on-failure
 # 进入 Python 目录
 cd python
 
-# 运行纯 CUDA 训练
+# MLP 训练 (95.36% accuracy, 8.24s)
 python train_mnist_cuda.py
 
-# 输出:
-# Epoch 1: loss=0.75, test_acc=89.37%, time=0.8s
-# Epoch 10: loss=0.15, test_acc=95.36%, time=8.2s
-```
+# CNN 训练 (97.92% accuracy, 11m36s)
+python train_mnist_cnn_cuda.py
 
-### 性能对比测试
-
-```bash
-# 对比 NumPy vs Pure CUDA
-python performance_comparison.py
-
-# 输出:
-# NumPy model: 22.58 ms/batch
-# Pure CUDA:   2.13 ms/batch
-# Speedup:     10.61x
+# PyTorch 对比 (97.34% accuracy, 14.8s)
+python train_mnist_cnn_pytorch.py
 ```
 
 ---
@@ -208,35 +213,43 @@ handle_cuda/
 │   ├── matmul.cu           # Tiled GEMM (1062 GFLOPS)
 │   ├── relu.cu             # Vectorized ReLU
 │   ├── softmax.cu          # Warp-level Softmax
-│   ├── conv2d.cu           # im2col + GEMM
+│   ├── conv2d.cu           # im2col + GEMM + Backward optimization
 │   ├── bias_add.cu         # Broadcasting
 │   ├── maxpool2d.cu        # Pooling
 │   ├── cross_entropy.cu    # Loss function
 │   ├── sgd_update.cu       # SGD optimizer
 │   ├── flatten.cu          # Reshape
+│   ├── sigmoid.cu          # Sigmoid activation
+│   ├── tanh.cu             # Tanh activation
+│   ├── dropout.cu          # Dropout regularization
 │   └── cuda_ops_export.cu  # C API 导出
 │
 ├── include/
-│   └── cuda_ops.h          # 头文件
+│   └── cuda_ops.h          # 头文件 + Conv2dBackwardBuffers struct
 │
 ├── python/
-│   ├── cuda_ops.py         # ctypes binding
+│   ├── cuda_ops.py         # ctypes binding (含预分配缓冲区API)
 │   ├── model_cuda.py       # 纯 CUDA MLP
+│   ├── model_cnn_cuda.py   # 纯 CUDA CNN (预分配优化)
 │   ├── model.py            # NumPy MLP (对比)
-│   ├── train_mnist_cuda.py # 训练脚本
+│   ├── train_mnist_cuda.py # MLP 训练脚本
+│   ├── train_mnist_cnn_cuda.py # CNN 训练脚本
+│   ├── train_mnist_cnn_pytorch.py # PyTorch 对比
 │   ├── mnist_data.py       # 数据加载
-│   └ performance_comparison.py # 性能对比
+│   └ performance_comparison.py # MLP 性能对比
 │
 ├── tests/
 │   ├── test_matmul.cpp     # 5 tests
 │   ├── test_relu.cpp       # 5 tests
 │   ├── test_softmax.cpp    # 4 tests
 │   ├── test_conv2d.cpp     # 6 tests
-│   └ ...                   # 共 50 tests
+│   ├── test_edge_cases.cpp # 9 tests (边界情况)
+│   └ ...                   # 共 59 tests
 │
 ├── docs/
-│   ├── PERFORMANCE_METRICS.md  # 性能报告
-│   └ performance_comparison.png # 可视化图
+│   ├── PROJECT_PLAN.md     # 项目计划
+│   ├── PERFORMANCE_METRICS.md  # 性能报告 + CNN对比分析
+│   └ performance_comparison.png # MLP 可视化图
 │
 └── CMakeLists.txt
 ```
@@ -255,39 +268,25 @@ handle_cuda/
 
 ## Next Steps
 
-### ✅ CNN 训练扩展 (已完成)
+### ✅ 已完成
 
-Conv2d/MaxPool2d Python binding 和 CNN 模型已实现。运行训练：
-
-```bash
-cd python && python train_mnist_cnn_cuda.py
-```
-
-CNN 架构：
-- Conv1(1→16, 3x3) → ReLU → MaxPool(2x2)
-- Conv2(16→32, 3x3) → ReLU → MaxPool(2x2)
-- Flatten → FC(1568→10)
-
-**性能成果：**
-- 最终准确率：**97.92%**（10 epochs）
-- 训练速度：~1000 samples/s，每epoch约60秒
-- 总训练时间：11分36秒
-
-**优化历程：**
-| 优化 | 技术 | 性能提升 |
-|------|------|---------|
-| im2col + GEMM | 卷积转换为矩阵乘法 | 190 → 900 samples/s (+4.7x) |
-| Tiled transpose matmul | 32x32 shared memory | backward速度 +50% |
-| 预分配缓冲区 | 消除每batch malloc/free | 900 → 1000 samples/s (+27%) |
+| 功能 | 状态 | 成果 |
+|------|------|------|
+| MLP 训练 | ✅ 完成 | 95.36% accuracy, 10.61x vs NumPy |
+| CNN 训练 | ✅ 完成 | 97.92% accuracy, im2col+GEMM优化 |
+| 边界情况测试 | ✅ 完成 | 9 个新增测试，100% 通过 |
+| 预分配缓冲区优化 | ✅ 完成 | 消除 malloc/free，+27% 速度 |
 
 ### 进一步扩展方向
 
 | 方向 | 描述 | 预期收益 |
 |------|------|---------|
-| **FP16 Inference** | 修改 kernel 支持 `half` 精度 | 推理速度 ~2x |
+| **cuBLAS 集成** | 使用 cuBLAS sgemm 替代自实现 matmul | 速度 +2-3x |
+| **cuDNN 集成** | 使用 cuDNN conv/pool kernels | CNN 速度 +10-20x |
+| **FP16/Tensor Core** | 修改 kernel 支持 `half` 精度 | 推理速度 +2-4x |
 | **BatchNorm/LayerNorm** | 添加归一化算子 | 支持更深的网络 |
 | **Attention** | Transformer 核心算子 | 支持 LLM 架构 |
-| **性能回归测试** | 在 `tests/` 添加 benchmark 阈值 | 防止优化退化 |
+| **Winograd 算法** | 手动实现 3x3 Winograd | Conv2d +2.5x |
 
 ### 与其他项目的关联
 
