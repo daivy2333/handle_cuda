@@ -190,6 +190,60 @@ void cuda_conv2d_backward_f32(const float* grad_out, const float* input, const f
     cuda_conv2d_backward(grad_out, input, weight, grad_input, grad_weight, grad_bias, desc, 0);
 }
 
+// Conv2d backward with pre-allocated buffers (optimized, no malloc/free per batch)
+void cuda_conv2d_backward_with_buffers_f32(const float* grad_out, const float* input, const float* weight,
+                                            float* grad_input, float* grad_weight, float* grad_bias,
+                                            float* reshaped_grad, float* col_buffer, float* col_grad,
+                                            int N, int C, int H, int W,
+                                            int out_C, int kernel_h, int kernel_w,
+                                            int stride_h, int stride_w, int pad_h, int pad_w) {
+    Conv2dDesc desc;
+    desc.N = N;
+    desc.C = C;
+    desc.H = H;
+    desc.W = W;
+    desc.out_C = out_C;
+    desc.kernel_h = kernel_h;
+    desc.kernel_w = kernel_w;
+    desc.stride_h = stride_h;
+    desc.stride_w = stride_w;
+    desc.pad_h = pad_h;
+    desc.pad_w = pad_w;
+    desc.groups = 1;
+
+    desc.out_H = (H + 2 * pad_h - kernel_h) / stride_h + 1;
+    desc.out_W = (W + 2 * pad_w - kernel_w) / stride_w + 1;
+
+    cuda_conv2d_backward_with_buffers(grad_out, input, weight, grad_input, grad_weight, grad_bias,
+                                       desc, reshaped_grad, col_buffer, col_grad, 0);
+}
+
+// Calculate conv2d backward buffer sizes
+// Returns total size, fills reshaped_size and col_size
+size_t cuda_conv2d_backward_buffer_sizes_f32(int N, int C, int H, int W,
+                                               int out_C, int kernel_h, int kernel_w,
+                                               int stride_h, int stride_w, int pad_h, int pad_w,
+                                               size_t* reshaped_size, size_t* col_size) {
+    Conv2dDesc desc;
+    desc.N = N;
+    desc.C = C;
+    desc.H = H;
+    desc.W = W;
+    desc.out_C = out_C;
+    desc.kernel_h = kernel_h;
+    desc.kernel_w = kernel_w;
+    desc.stride_h = stride_h;
+    desc.stride_w = stride_w;
+    desc.pad_h = pad_h;
+    desc.pad_w = pad_w;
+    desc.groups = 1;
+
+    desc.out_H = (H + 2 * pad_h - kernel_h) / stride_h + 1;
+    desc.out_W = (W + 2 * pad_w - kernel_w) / stride_w + 1;
+
+    return cuda_conv2d_backward_buffer_sizes(desc, reshaped_size, col_size);
+}
+
 // ============== MaxPool2d C API ==============
 // MaxPool2d forward: input [N, C, H, W] -> output [N, C, out_H, out_W]
 // indices stores the index of max element for backward pass

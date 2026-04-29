@@ -29,6 +29,13 @@ struct Pool2dDesc {
     int pad_h, pad_w;
 };
 
+// Pre-allocated buffers for conv2d backward (avoid malloc/free per batch)
+struct Conv2dBackwardBuffers {
+    float* reshaped_grad;   // [out_C, N*out_H*out_W]
+    float* col_buffer;      // [C*K*K, N*out_H*out_W]
+    float* col_grad;        // [C*K*K, N*out_H*out_W]
+};
+
 void cuda_matmul(const float* A, const float* B, float* C, const MatMulDesc& desc, cudaStream_t stream = 0);
 void cuda_matmul_backward(const float* grad_C, const float* A, const float* B,
                           float* grad_A, float* grad_B,
@@ -63,6 +70,17 @@ void cuda_conv2d_im2col(const float* input, const float* weight, const float* bi
 void cuda_conv2d_backward(const float* grad_out, const float* input, const float* weight,
                           float* grad_input, float* grad_weight, float* grad_bias,
                           const Conv2dDesc& desc, cudaStream_t stream = 0);
+
+// Optimized backward with pre-allocated buffers (no malloc/free overhead)
+void cuda_conv2d_backward_with_buffers(const float* grad_out, const float* input, const float* weight,
+                                        float* grad_input, float* grad_weight, float* grad_bias,
+                                        const Conv2dDesc& desc,
+                                        float* reshaped_grad, float* col_buffer, float* col_grad,
+                                        cudaStream_t stream = 0);
+
+// Calculate buffer sizes for conv2d backward
+size_t cuda_conv2d_backward_buffer_sizes(const Conv2dDesc& desc,
+                                          size_t* reshaped_size, size_t* col_size);
 
 void cuda_maxpool2d(const float* input, float* output, int* indices,
                    const Pool2dDesc& desc, cudaStream_t stream = 0);

@@ -443,3 +443,107 @@ void cuda_conv2d_backward(const float* grad_out, const float* input, const float
 
     CUDA_CHECK(cudaGetLastError());
 }
+
+// ============================================================================
+// Optimized backward with pre-allocated buffers (no malloc/free per batch)
+// ============================================================================
+
+void cuda_conv2d_backward_with_buffers(const float* grad_out, const float* input, const float* weight,
+                                        float* grad_input, float* grad_weight, float* grad_bias,
+                                        const Conv2dDesc& desc,
+                                        float* reshaped_grad, float* col_buffer, float* col_grad,
+                                        cudaStream_t stream) {
+    int N = desc.N;
+    int C = desc.C;
+    int H = desc.H;
+    int W = desc.W;
+    int out_C = desc.out_C;
+    int out_H = desc.out_H;
+    int out_W = desc.out_W;
+    int K = desc.kernel_h;
+
+    // ===== Bias gradient - optimized with parallel reduction =====
+    int total_spatial = N * out_H * out_W;
+    int spatial_offset = out_H * out_W;
+    conv2d_backward_bias_kernel_opt<<<out_C, 256, 0, stream>>>(
+        grad_out, grad_bias, total_spatial, out_C, spatial_offset);
+
+    // ===== Check if we can use im2col optimization =====
+    bool can_optimize = (desc.stride_h == 1 && desc.stride_w == 1 &&
+                         desc.groups == 1 && desc.kernel_h == desc.kernel_w);
+
+    if (can_optimize) {
+        int col_rows = C * K * K;
+        int col_cols = N * out_H * out_W;
+
+        // Step 1: Reshape grad_out [N, out_C, out_H, out_W] -> [out_C, col_cols]
+        int total_grad = N * out_C * out_H * out_W;
+        int reshape_blocks = (total_grad + 255) / 256;
+        reshape_grad_for_backward_kernel<<<reshape_blocks, 256, 0, stream>>>(
+            grad_out, reshaped_grad, N, out_C, out_H, out_W);
+
+        // Step 2: im2col(input) -> col_buffer
+        int total_col = col_rows * col_cols;
+        int col_blocks = (total_col + 255) / 256;
+        im2col_kernel<<<col_blocks, 256, 0, stream>>>(
+            input, col_buffer, N, C, H, W, out_H, out_W, K, K,
+            desc.pad_h, desc.pad_w, 1, 1);
+
+        // Step 3: grad_weight = reshaped_grad @ col_buffer^T
+        MatMulDesc weight_grad_desc;
+        weight_grad_desc.M = out_C;
+        weight_grad_desc.N = col_rows;
+        weight_grad_desc.K = col_cols;
+        weight_grad_desc.transpose_a = false;
+        weight_grad_desc.transpose_b = true;
+
+        cuda_matmul(reshaped_grad, col_buffer, grad_weight, weight_grad_desc, stream);
+
+        // Step 4: col_grad = weight^T @ reshaped_grad
+        MatMulDesc matmul_desc;
+        matmul_desc.M = col_rows;
+        matmul_desc.N = col_cols;
+        matmul_desc.K = out_C;
+        matmul_desc.transpose_a = true;
+        matmul_desc.transpose_b = false;
+
+        cuda_matmul(weight, reshaped_grad, col_grad, matmul_desc, stream);
+
+        // Step 5: grad_input = col2im(col_grad)
+        cudaMemsetAsync(grad_input, 0, N * C * H * W * sizeof(float), stream);
+
+        int col_total = col_rows * col_cols;
+        int col2im_blocks = (col_total + 255) / 256;
+        col2im_backward_kernel<<<col2im_blocks, 256, 0, stream>>>(
+            col_grad, grad_input, N, C, H, W, out_H, out_W, K, K,
+            desc.pad_h, desc.pad_w, 1, 1);
+    } else {
+        // Fallback to naive kernels
+        dim3 grid_input(H * W, C, N);
+        dim3 block_input(16, 16);
+        conv2d_backward_input_kernel_naive<<<grid_input, block_input, 0, stream>>>(
+            grad_out, weight, grad_input, N, C, H, W, out_C, out_H, out_W,
+            K, K, desc.stride_h, desc.stride_w, desc.pad_h, desc.pad_w);
+
+        dim3 grid_weight(K * K, C, out_C);
+        dim3 block_weight(16, 16);
+        conv2d_backward_weight_kernel<<<grid_weight, block_weight, 0, stream>>>(
+            grad_out, input, grad_weight, N, C, H, W, out_C, out_H, out_W,
+            K, K, desc.stride_h, desc.stride_w, desc.pad_h, desc.pad_w);
+    }
+
+    CUDA_CHECK(cudaGetLastError());
+}
+
+// Calculate buffer sizes
+size_t cuda_conv2d_backward_buffer_sizes(const Conv2dDesc& desc,
+                                          size_t* reshaped_size, size_t* col_size) {
+    int col_rows = desc.C * desc.kernel_h * desc.kernel_w;
+    int col_cols = desc.N * desc.out_H * desc.out_W;
+
+    *reshaped_size = desc.out_C * col_cols * sizeof(float);
+    *col_size = col_rows * col_cols * sizeof(float);
+
+    // Total memory needed: reshaped + col_buffer + col_grad
+    return *reshaped_size + 2 * (*col_size);
+}

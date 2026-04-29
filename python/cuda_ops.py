@@ -126,6 +126,26 @@ class CUDAOps:
         ]
         self.lib.cuda_conv2d_backward_f32.restype = None
 
+        # Conv2d backward with pre-allocated buffers (optimized)
+        self.lib.cuda_conv2d_backward_with_buffers_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_conv2d_backward_with_buffers_f32.restype = None
+
+        # Buffer size calculation
+        self.lib.cuda_conv2d_backward_buffer_sizes_f32.argtypes = [
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.POINTER(ctypes.c_size_t), ctypes.POINTER(ctypes.c_size_t)
+        ]
+        self.lib.cuda_conv2d_backward_buffer_sizes_f32.restype = ctypes.c_size_t
+
         # MaxPool2d
         self.lib.cuda_maxpool2d_f32.argtypes = [
             ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
@@ -389,6 +409,62 @@ class CUDAOps:
             stride_h, stride_w, pad_h, pad_w
         )
         return grad_input_ptr, grad_weight_ptr, grad_bias_ptr
+
+    def conv2d_backward_with_buffers(self, grad_out_ptr, input_ptr, weight_ptr,
+                                      N, C, H, W, out_C, kernel_h, kernel_w,
+                                      stride_h, stride_w, pad_h, pad_w,
+                                      reshaped_grad_ptr, col_buffer_ptr, col_grad_ptr,
+                                      grad_input_ptr=None, grad_weight_ptr=None, grad_bias_ptr=None):
+        """Optimized Conv2d backward with pre-allocated buffers (no malloc/free overhead).
+
+        Args:
+            grad_out_ptr: GPU pointer to gradient of output [N, out_C, out_H, out_W]
+            input_ptr: GPU pointer to forward input [N, C, H, W]
+            weight_ptr: GPU pointer to weight [out_C, C, kernel_h, kernel_w]
+            reshaped_grad_ptr: Pre-allocated buffer [out_C, N*out_H*out_W]
+            col_buffer_ptr: Pre-allocated buffer [C*K*K, N*out_H*out_W]
+            col_grad_ptr: Pre-allocated buffer [C*K*K, N*out_H*out_W]
+            ... dimensions same as forward
+
+        Returns:
+            grad_input_ptr, grad_weight_ptr, grad_bias_ptr
+        """
+        if grad_input_ptr is None:
+            grad_input_ptr = self.alloc(N * C * H * W)
+        if grad_weight_ptr is None:
+            grad_weight_ptr = self.alloc(out_C * C * kernel_h * kernel_w)
+        if grad_bias_ptr is None:
+            grad_bias_ptr = self.alloc(out_C)
+
+        self.lib.cuda_conv2d_backward_with_buffers_f32(
+            grad_out_ptr, input_ptr, weight_ptr,
+            grad_input_ptr, grad_weight_ptr, grad_bias_ptr,
+            reshaped_grad_ptr, col_buffer_ptr, col_grad_ptr,
+            N, C, H, W, out_C, kernel_h, kernel_w,
+            stride_h, stride_w, pad_h, pad_w
+        )
+        return grad_input_ptr, grad_weight_ptr, grad_bias_ptr
+
+    def conv2d_backward_buffer_sizes(self, N, C, H, W, out_C, kernel_h, kernel_w,
+                                      stride_h, stride_w, pad_h, pad_w):
+        """Calculate buffer sizes needed for conv2d_backward_with_buffers.
+
+        Args:
+            Same dimensions as conv2d forward
+
+        Returns:
+            (total_size, reshaped_size, col_size) in bytes
+        """
+        reshaped_size = ctypes.c_size_t()
+        col_size = ctypes.c_size_t()
+
+        total_size = self.lib.cuda_conv2d_backward_buffer_sizes_f32(
+            N, C, H, W, out_C, kernel_h, kernel_w,
+            stride_h, stride_w, pad_h, pad_w,
+            ctypes.byref(reshaped_size), ctypes.byref(col_size)
+        )
+
+        return total_size, reshaped_size.value, col_size.value
 
     def maxpool2d(self, input_ptr, N, C, H, W,
                   kernel_h=2, kernel_w=2, stride_h=2, stride_w=2,

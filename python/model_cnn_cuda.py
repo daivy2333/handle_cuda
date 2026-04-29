@@ -83,6 +83,34 @@ class SimpleCNN_CUDA:
         self.g_fc_w_ptr = self.ops.alloc(self.fc_in * self.fc_out)
         self.g_fc_b_ptr = self.ops.alloc(self.fc_out)
 
+        # Pre-allocate buffers for optimized conv2d backward (no malloc/free per batch)
+        # Conv1 backward buffers: batch size will be set during forward
+        # Conv2 backward buffers: similar pattern
+        # We allocate for max expected batch size (64)
+        max_batch = 64
+        H, W = 28, 28
+
+        # Conv1 buffer sizes: N=64, C=1, out_C=16, kernel=3
+        _, conv1_reshaped_size, conv1_col_size = self.ops.conv2d_backward_buffer_sizes(
+            max_batch, self.conv1_in_C, H, W,
+            self.conv1_out_C, self.conv1_kernel, self.conv1_kernel,
+            self.conv1_stride, self.conv1_stride, self.conv1_pad, self.conv1_pad
+        )
+        self.conv1_reshaped_grad_ptr = self.ops.lib.cuda_alloc(conv1_reshaped_size)
+        self.conv1_col_buffer_ptr = self.ops.lib.cuda_alloc(conv1_col_size)
+        self.conv1_col_grad_ptr = self.ops.lib.cuda_alloc(conv1_col_size)
+
+        # Conv2 buffer sizes: N=64, C=16, out_C=32, kernel=3, H=14, W=14
+        pool1_H, pool1_W = 14, 14
+        _, conv2_reshaped_size, conv2_col_size = self.ops.conv2d_backward_buffer_sizes(
+            max_batch, self.conv2_in_C, pool1_H, pool1_W,
+            self.conv2_out_C, self.conv2_kernel, self.conv2_kernel,
+            self.conv2_stride, self.conv2_stride, self.conv2_pad, self.conv2_pad
+        )
+        self.conv2_reshaped_grad_ptr = self.ops.lib.cuda_alloc(conv2_reshaped_size)
+        self.conv2_col_buffer_ptr = self.ops.lib.cuda_alloc(conv2_col_size)
+        self.conv2_col_grad_ptr = self.ops.lib.cuda_alloc(conv2_col_size)
+
         # Cache for backward pass (all GPU pointers)
         self.cache = {}
 
@@ -115,6 +143,19 @@ class SimpleCNN_CUDA:
                 self.ops.free(self.g_fc_w_ptr)
             if hasattr(self, 'g_fc_b_ptr'):
                 self.ops.free(self.g_fc_b_ptr)
+            # Free pre-allocated conv backward buffers
+            if hasattr(self, 'conv1_reshaped_grad_ptr'):
+                self.ops.lib.cuda_free(self.conv1_reshaped_grad_ptr)
+            if hasattr(self, 'conv1_col_buffer_ptr'):
+                self.ops.lib.cuda_free(self.conv1_col_buffer_ptr)
+            if hasattr(self, 'conv1_col_grad_ptr'):
+                self.ops.lib.cuda_free(self.conv1_col_grad_ptr)
+            if hasattr(self, 'conv2_reshaped_grad_ptr'):
+                self.ops.lib.cuda_free(self.conv2_reshaped_grad_ptr)
+            if hasattr(self, 'conv2_col_buffer_ptr'):
+                self.ops.lib.cuda_free(self.conv2_col_buffer_ptr)
+            if hasattr(self, 'conv2_col_grad_ptr'):
+                self.ops.lib.cuda_free(self.conv2_col_grad_ptr)
             # Free cached activations if any
             if hasattr(self, 'cache'):
                 for key in ['conv1_out_ptr', 'conv1_relu_ptr', 'pool1_out_ptr', 'pool1_indices_ptr',
@@ -253,13 +294,14 @@ class SimpleCNN_CUDA:
         self.ops.relu_backward(grad_conv2_relu_ptr, conv2_relu_ptr, grad_conv2_ptr,
                                batch * self.conv2_out_C * pool1_H * pool1_W)
 
-        # Backprop Conv2
+        # Backprop Conv2 (using pre-allocated buffers)
         pool1_out_ptr = self.cache['pool1_out_ptr']
-        grad_pool1_ptr, grad_conv2_w_ptr, grad_conv2_b_ptr = self.ops.conv2d_backward(
+        grad_pool1_ptr, grad_conv2_w_ptr, grad_conv2_b_ptr = self.ops.conv2d_backward_with_buffers(
             grad_conv2_ptr, pool1_out_ptr, self.conv2_w_ptr,
             batch, self.conv2_in_C, pool1_H, pool1_W,
             self.conv2_out_C, self.conv2_kernel, self.conv2_kernel,
             self.conv2_stride, self.conv2_stride, self.conv2_pad, self.conv2_pad,
+            self.conv2_reshaped_grad_ptr, self.conv2_col_buffer_ptr, self.conv2_col_grad_ptr,
             grad_input_ptr=None, grad_weight_ptr=self.g_conv2_w_ptr, grad_bias_ptr=self.g_conv2_b_ptr
         )
 
@@ -279,13 +321,14 @@ class SimpleCNN_CUDA:
         self.ops.relu_backward(grad_conv1_relu_ptr, conv1_relu_ptr, grad_conv1_ptr,
                                batch * self.conv1_out_C * H * W)
 
-        # Backprop Conv1
+        # Backprop Conv1 (using pre-allocated buffers)
         x_ptr = self.cache['x_ptr']
-        grad_x_ptr, grad_conv1_w_ptr, grad_conv1_b_ptr = self.ops.conv2d_backward(
+        grad_x_ptr, grad_conv1_w_ptr, grad_conv1_b_ptr = self.ops.conv2d_backward_with_buffers(
             grad_conv1_ptr, x_ptr, self.conv1_w_ptr,
             batch, self.conv1_in_C, H, W,
             self.conv1_out_C, self.conv1_kernel, self.conv1_kernel,
             self.conv1_stride, self.conv1_stride, self.conv1_pad, self.conv1_pad,
+            self.conv1_reshaped_grad_ptr, self.conv1_col_buffer_ptr, self.conv1_col_grad_ptr,
             grad_input_ptr=None, grad_weight_ptr=self.g_conv1_w_ptr, grad_bias_ptr=self.g_conv1_b_ptr
         )
 
