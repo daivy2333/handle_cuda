@@ -178,9 +178,111 @@ void cuda_matmul_fp16_naive(
 
 namespace {
 
-// Naive FP16 backward kernels - simpler, more precision control
+// Tiled FP16 backward kernels - corrected index mapping for precision
 // grad_B = A^T @ grad_C: [K, N]
 // A: [M, K], grad_C: [M, N], grad_B: [K, N]
+// grad_B[row][col] = sum over m of A[m][row] * grad_C[m][col]
+__global__ void matmul_fp16_backward_B_tiled_kernel(
+    const __half* A, const float* grad_C, float* grad_B,
+    int M, int K, int N) {
+
+    int row = blockIdx.y * 16 + threadIdx.y;  // K dimension
+    int col = blockIdx.x * 16 + threadIdx.x;  // N dimension
+
+    __shared__ __half As[16][16];   // A[m_local][k_local]
+    __shared__ float Cs[16][16];    // grad_C[m_local][n_local]
+
+    float sum = 0.0f;
+
+    for (int t = 0; t < (M + 15) / 16; ++t) {
+        int m_idx = t * 16 + threadIdx.y;
+
+        // Load A[m_idx][blockIdx.y*16+threadIdx.x] - row varies by threadIdx.x
+        int k_idx = blockIdx.y * 16 + threadIdx.x;
+        if (m_idx < M && k_idx < K) {
+            As[threadIdx.y][threadIdx.x] = A[m_idx * K + k_idx];
+        } else {
+            As[threadIdx.y][threadIdx.x] = __half(0);
+        }
+
+        // Load grad_C[m_idx][blockIdx.x*16+threadIdx.x]
+        int n_idx = blockIdx.x * 16 + threadIdx.x;
+        if (m_idx < M && n_idx < N) {
+            Cs[threadIdx.y][threadIdx.x] = grad_C[m_idx * N + n_idx];
+        } else {
+            Cs[threadIdx.y][threadIdx.x] = 0.0f;
+        }
+
+        __syncthreads();
+
+        // Accumulate: A[t*16+m_local][row] * grad_C[t*16+m_local][col]
+        // As[m_local][threadIdx.y] = A[t*16+m_local][blockIdx.y*16+threadIdx.y] = A[t*16+m_local][row]
+        // Cs[m_local][threadIdx.x] = grad_C[t*16+m_local][blockIdx.x*16+threadIdx.x] = grad_C[t*16+m_local][col]
+        for (int m_local = 0; m_local < 16; ++m_local) {
+            sum += __half2float(As[m_local][threadIdx.y]) * Cs[m_local][threadIdx.x];
+        }
+
+        __syncthreads();
+    }
+
+    if (row < K && col < N) {
+        grad_B[row * N + col] = sum;
+    }
+}
+
+// grad_A = grad_C @ B^T: [M, K]
+// grad_C: [M, N], B: [K, N], grad_A: [M, K]
+// grad_A[row][col] = sum over n of grad_C[row][n] * B[col][n]
+__global__ void matmul_fp16_backward_A_tiled_kernel(
+    const float* grad_C, const __half* B, float* grad_A,
+    int M, int N, int K) {
+
+    int row = blockIdx.y * 16 + threadIdx.y;  // M dimension
+    int col = blockIdx.x * 16 + threadIdx.x;  // K dimension
+
+    __shared__ float Cs[16][16];    // grad_C[m_local][n_local]
+    __shared__ __half Bs[16][16];   // B[k_local][n_local]
+
+    float sum = 0.0f;
+
+    for (int t = 0; t < (N + 15) / 16; ++t) {
+        int n_idx = t * 16 + threadIdx.x;
+
+        // Load grad_C[blockIdx.y*16+threadIdx.y][t*16+threadIdx.x]
+        int m_idx = blockIdx.y * 16 + threadIdx.y;
+        if (m_idx < M && n_idx < N) {
+            Cs[threadIdx.y][threadIdx.x] = grad_C[m_idx * N + n_idx];
+        } else {
+            Cs[threadIdx.y][threadIdx.x] = 0.0f;
+        }
+
+        // Load B[blockIdx.x*16+threadIdx.x][t*16+threadIdx.y]
+        int k_idx = blockIdx.x * 16 + threadIdx.x;
+        int n_idx2 = t * 16 + threadIdx.y;
+        if (k_idx < K && n_idx2 < N) {
+            Bs[threadIdx.x][threadIdx.y] = B[k_idx * N + n_idx2];
+        } else {
+            Bs[threadIdx.x][threadIdx.y] = __half(0);
+        }
+
+        __syncthreads();
+
+        // Accumulate: grad_C[row][t*16+n] * B[col][t*16+n]
+        // Cs[threadIdx.y][n_local] = grad_C[blockIdx.y*16+threadIdx.y][t*16+n_local] = grad_C[row][t*16+n_local]
+        // Bs[threadIdx.x][n_local] = B[blockIdx.x*16+threadIdx.x][t*16+n_local] = B[col][t*16+n_local]
+        for (int n_local = 0; n_local < 16; ++n_local) {
+            sum += Cs[threadIdx.y][n_local] * __half2float(Bs[threadIdx.x][n_local]);
+        }
+
+        __syncthreads();
+    }
+
+    if (row < M && col < K) {
+        grad_A[row * K + col] = sum;
+    }
+}
+
+// Naive FP16 backward kernels - fallback for small matrices
 __global__ void matmul_fp16_backward_B_naive_kernel(
     const __half* A, const float* grad_C, float* grad_B,
     int M, int K, int N) {
@@ -226,11 +328,12 @@ void cuda_matmul_fp16_backward(
     float* grad_A, float* grad_B,
     int M, int N, int K, cudaStream_t stream) {
 
+    // Use tiled kernels for better performance
     // grad_B = A^T @ grad_C: [K, N]
     if (grad_B) {
         dim3 grid_B((N + 15) / 16, (K + 15) / 16);
         dim3 block_B(16, 16);
-        matmul_fp16_backward_B_naive_kernel<<<grid_B, block_B, 0, stream>>>(
+        matmul_fp16_backward_B_tiled_kernel<<<grid_B, block_B, 0, stream>>>(
             A, grad_C, grad_B, M, K, N);
     }
 
@@ -238,7 +341,7 @@ void cuda_matmul_fp16_backward(
     if (grad_A) {
         dim3 grid_A((K + 15) / 16, (M + 15) / 16);
         dim3 block_A(16, 16);
-        matmul_fp16_backward_A_naive_kernel<<<grid_A, block_A, 0, stream>>>(
+        matmul_fp16_backward_A_tiled_kernel<<<grid_A, block_A, 0, stream>>>(
             grad_C, B, grad_A, M, N, K);
     }
 
