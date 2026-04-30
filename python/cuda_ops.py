@@ -117,6 +117,16 @@ class CUDAOps:
         ]
         self.lib.cuda_conv2d_f32.restype = None
 
+        # Conv2d im2col (much faster)
+        self.lib.cuda_conv2d_im2col_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_conv2d_im2col_f32.restype = None
+
         self.lib.cuda_conv2d_backward_f32.argtypes = [
             ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
             ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
@@ -375,6 +385,45 @@ class CUDAOps:
 
         self.lib.cuda_conv2d_f32(
             input_ptr, weight_ptr, bias_arg, output_ptr,
+            N, C, H, W, out_C, kernel_h, kernel_w,
+            stride_h, stride_w, pad_h, pad_w
+        )
+        return output_ptr
+
+    def conv2d_im2col(self, input_ptr, weight_ptr, bias_ptr,
+                      N, C, H, W, out_C, kernel_h, kernel_w,
+                      stride_h=1, stride_w=1, pad_h=0, pad_w=0,
+                      col_buffer=None, gemm_buffer=None, output_ptr=None):
+        """Conv2d using im2col + GEMM (much faster than naive conv2d).
+
+        Args:
+            input_ptr: GPU pointer to input [N, C, H, W]
+            weight_ptr: GPU pointer to weight [out_C, C, kernel_h, kernel_w]
+            bias_ptr: GPU pointer to bias [out_C] (can be None)
+            ... dimensions ...
+
+        Returns:
+            output_ptr: GPU pointer to output [N, out_C, out_H, out_W]
+        """
+        out_H = (H + 2 * pad_h - kernel_h) // stride_h + 1
+        out_W = (W + 2 * pad_w - kernel_w) // stride_w + 1
+
+        if output_ptr is None:
+            output_ptr = self.alloc(N * out_C * out_H * out_W)
+
+        # Allocate im2col buffers if not provided
+        col_rows = C * kernel_h * kernel_w
+        col_cols = N * out_H * out_W
+        if col_buffer is None:
+            col_buffer = self.alloc(col_rows * col_cols)
+        if gemm_buffer is None:
+            gemm_buffer = self.alloc(out_C * col_cols)
+
+        bias_arg = bias_ptr if bias_ptr is not None else None
+
+        self.lib.cuda_conv2d_im2col_f32(
+            input_ptr, weight_ptr, bias_arg, output_ptr,
+            col_buffer, gemm_buffer,
             N, C, H, W, out_C, kernel_h, kernel_w,
             stride_h, stride_w, pad_h, pad_w
         )

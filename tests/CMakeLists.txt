@@ -1,9 +1,13 @@
 set(CUDA_OPS_SOURCES
     ${CMAKE_SOURCE_DIR}/src/matmul.cu
+    ${CMAKE_SOURCE_DIR}/src/matmul_fp16.cu
+    ${CMAKE_SOURCE_DIR}/src/half_utils.cu
     ${CMAKE_SOURCE_DIR}/src/relu.cu
     ${CMAKE_SOURCE_DIR}/src/bias_add.cu
     ${CMAKE_SOURCE_DIR}/src/softmax.cu
     ${CMAKE_SOURCE_DIR}/src/conv2d.cu
+    ${CMAKE_SOURCE_DIR}/src/conv2d_winograd.cu
+    ${CMAKE_SOURCE_DIR}/src/conv2d_fused.cu
     ${CMAKE_SOURCE_DIR}/src/maxpool2d.cu
     ${CMAKE_SOURCE_DIR}/src/sigmoid.cu
     ${CMAKE_SOURCE_DIR}/src/tanh.cu
@@ -83,3 +87,18 @@ gtest_discover_tests(test_cross_entropy)
 gtest_discover_tests(test_sgd_update)
 gtest_discover_tests(test_flatten)
 gtest_discover_tests(test_edge_cases)
+
+add_executable(test_conv2d_winograd test_conv2d_winograd.cpp)
+target_link_libraries(test_conv2d_winograd cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_conv2d_winograd PRIVATE ${CMAKE_SOURCE_DIR}/include)
+gtest_discover_tests(test_conv2d_winograd)
+
+add_executable(test_fp16_tensor_core test_fp16_tensor_core.cpp)
+target_link_libraries(test_fp16_tensor_core cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_fp16_tensor_core PRIVATE ${CMAKE_SOURCE_DIR}/include)
+gtest_discover_tests(test_fp16_tensor_core)
+
+add_executable(test_conv2d_fused test_conv2d_fused.cpp)
+target_link_libraries(test_conv2d_fused cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_conv2d_fused PRIVATE ${CMAKE_SOURCE_DIR}/include)
+gtest_discover_tests(test_conv2d_fused)

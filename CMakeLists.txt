@@ -37,6 +37,8 @@ target_include_directories(benchmark PRIVATE ${CMAKE_SOURCE_DIR}/include)
 add_library(cuda_ops_shared SHARED
     src/cuda_ops_export.cu
     src/matmul.cu
+    src/matmul_fp16.cu
+    src/half_utils.cu
     src/relu.cu
     src/bias_add.cu
     src/softmax.cu
@@ -44,6 +46,8 @@ add_library(cuda_ops_shared SHARED
     src/sgd_update.cu
     src/flatten.cu
     src/conv2d.cu
+    src/conv2d_winograd.cu
+    src/conv2d_fused.cu
     src/maxpool2d.cu
 )
 target_include_directories(cuda_ops_shared PUBLIC ${CMAKE_SOURCE_DIR}/include)
