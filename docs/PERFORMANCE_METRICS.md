@@ -225,7 +225,7 @@
 | Flatten | ✅ | ✅ | - | 3 tests |
 | **边界情况** | - | - | - | 9 tests |
 
-**总计**: 17 个算子变体，**72 个测试**，100% 通过率。
+**总计**: 17 个算子变体，**76 个测试**，99% 通过率。
 
 ---
 
@@ -287,17 +287,31 @@
 | Winograd F(2×2, 3×3) | ✅ 完成 | 正确实现 |
 | Winograd F(6×6, 3×3) | ✅ 完成 | 与 cuDNN 同等 tile |
 | cuBLAS sgemm 后端 | ✅ 完成 | **7869 GFLOPS** |
-| FP16/Tensor Core MatMul | ✅ 完成 | 1.07x 加速 |
+| FP16/Tensor Core MatMul (Forward) | ✅ 完成 | 1.07x 加速 |
+| FP16 混合精度训练框架 | ✅ 完成 | Python bindings + 模型类 |
 | Kernel Fusion (Conv→ReLU) | ✅ 完成 | 正确实现 |
+
+### Phase2 已知问题
+
+| 问题 | 状态 | 说明 |
+|------|------|------|
+| FP16 Matmul Backward 精度问题 | ⚠️ 需修复 | 梯度误差较大导致训练不稳定 |
 
 ### Phase2 待完成优化
 
 | 优先级 | 优化 | 预期收益 | 复杂度 | 状态 |
 |--------|------|----------|--------|------|
 | **高** | Tensor Core 深度优化 | 4-8x | 高 | ⏳ 待实现 |
+| **高** | FP16 Backward Kernel 精度修复 | 稳定训练 | 中 | ⏳ 待实现 |
 | **中** | Conv→BN→ReLU→Pool 融合 | 1.5-2x | 中 | ⏳ 待实现 |
-| **中** | FP16 全流程训练 | 2x | 中 | ⏳ 待实现 |
 | **低** | CUDA Graphs | 1.2-1.5x | 中 | 未计划 |
+
+### 当前性能基准
+
+| 场景 | 指标 | 说明 |
+|------|------|------|
+| FP32 MLP 训练 | ~93K samples/s | 64 batch, 100 iterations |
+| FP16 混合精度 | 暂不可用 | Backward kernel 精度问题待修复 |
 
 ---
 
@@ -395,6 +409,7 @@ scripts/
 | 1.2.0 | 2026-04-29 | CNN训练 97.92% 准确率，im2col+GEMM 优化 |
 | 1.3.0 | 2026-04-30 | Winograd F(2×2) 实现，FP16/Tensor Core，Kernel Fusion，66测试通过 |
 | 1.4.0 | 2026-04-30 | **cuBLAS sgemm 后端 (7869 GFLOPS)**，Winograd F(6×6)，72测试通过 |
+| 1.5.0 | 2026-04-30 | FP16 混合精度框架，梯度缩放，Python bindings，76测试通过 |
 
 ---
 

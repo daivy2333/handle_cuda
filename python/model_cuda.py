@@ -500,7 +500,8 @@ class SimpleMLP_MixedPrecision:
 
         self.ops.scale_gradients(self.gb1_fp32, 256, 1.0 / self.loss_scale)
 
-        # Cleanup
+        # Cleanup - free all allocated buffers including cached ones
+        # Free gradient buffers
         self.ops.free(grad_logits_fp32_ptr)
         self.ops.free(grad_h2_fp32_ptr)
         self.ops.free(grad_h2_relu_fp32_ptr)
@@ -510,6 +511,18 @@ class SimpleMLP_MixedPrecision:
         self.ops.free(grad_h1_fp16_ptr)
         self.ops.free(grad_x_fp32_ptr)
         self.ops.free(logits_fp32_ptr)
+
+        # Free cached FP16 buffers from forward pass
+        if 'x_fp16' in self.cache:
+            self.ops.free(self.cache['x_fp16'])
+        if 'h1_fp16' in self.cache:
+            self.ops.free(self.cache['h1_fp16'])
+        if 'h2_fp16' in self.cache:
+            self.ops.free(self.cache['h2_fp16'])
+        if 'h1_relu_fp32' in self.cache:
+            self.ops.free(self.cache['h1_relu_fp32'])
+        if 'h2_relu_fp32' in self.cache:
+            self.ops.free(self.cache['h2_relu_fp32'])
 
         self.cache.clear()
 
