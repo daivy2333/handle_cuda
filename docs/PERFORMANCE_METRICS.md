@@ -43,6 +43,22 @@
 |---------|--------------|--------------|--------|-------------|
 | 2048 × 2048 | 1.90 | 1.77 | **1.07x** | 1211.3 |
 
+#### FP16 混合精度训练
+
+| 配置 | FP32时间 | FP16时间 | 加速比 | 损失稳定性 |
+|------|---------|---------|--------|-----------|
+| MLP 3层, batch=64, 50 iter | 0.03s | 0.04s | **0.94x** | ✅ 稳定 |
+
+**精度分析**:
+- FP16 Backward Naive Kernel: max_grad_A_error=0.0009, max_grad_B_error=0.0012
+- Loss Scaling: 128.0 (防止梯度下溢)
+- 训练损失: FP32 2.3063, FP16 2.2989 (收敛正常)
+
+**性能瓶颈**:
+- Naive backward kernel 性能较低 (待 tiled kernel 精度修复后恢复)
+- FP16/FP32 转换开销
+- Loss scaling 操作
+
 **性能分析**:
 - **cuBLAS sgemm**: 7869 GFLOPS @ 2048×2048 (**RTX 4060 FP32峰值的60%**)
 - **自实现 Tiled**: 1061.6 GFLOPS (自实现的峰值的8%)
@@ -295,14 +311,14 @@
 
 | 问题 | 状态 | 说明 |
 |------|------|------|
-| FP16 Matmul Backward 精度问题 | ⚠️ 需修复 | 梯度误差较大导致训练不稳定 |
+| FP16 Matmul Backward 精度问题 | ✅ 已修复 | Naive kernel 精度控制更好 |
 
 ### Phase2 待完成优化
 
 | 优先级 | 优化 | 预期收益 | 复杂度 | 状态 |
 |--------|------|----------|--------|------|
 | **高** | Tensor Core 深度优化 | 4-8x | 高 | ⏳ 待实现 |
-| **高** | FP16 Backward Kernel 精度修复 | 稳定训练 | 中 | ⏳ 待实现 |
+| **高** | FP16 Backward Kernel 性能优化 | 2-3x | 中 | ⏳ 待实现 |
 | **中** | Conv→BN→ReLU→Pool 融合 | 1.5-2x | 中 | ⏳ 待实现 |
 | **低** | CUDA Graphs | 1.2-1.5x | 中 | 未计划 |
 
@@ -310,8 +326,8 @@
 
 | 场景 | 指标 | 说明 |
 |------|------|------|
-| FP32 MLP 训练 | ~93K samples/s | 64 batch, 100 iterations |
-| FP16 混合精度 | 暂不可用 | Backward kernel 精度问题待修复 |
+| FP32 MLP 训练 | ~79K samples/s | 64 batch, 50 iterations |
+| FP16 混合精度 | ~67K samples/s (0.94x) | Naive backward kernel 待优化 |
 
 ---
 
@@ -410,6 +426,7 @@ scripts/
 | 1.3.0 | 2026-04-30 | Winograd F(2×2) 实现，FP16/Tensor Core，Kernel Fusion，66测试通过 |
 | 1.4.0 | 2026-04-30 | **cuBLAS sgemm 后端 (7869 GFLOPS)**，Winograd F(6×6)，72测试通过 |
 | 1.5.0 | 2026-04-30 | FP16 混合精度框架，梯度缩放，Python bindings，76测试通过 |
+| 1.5.1 | 2026-04-30 | **FP16 Backward 精度修复**，Naive kernel 稳定训练，75测试通过 |
 
 ---
 

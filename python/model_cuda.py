@@ -510,6 +510,7 @@ class SimpleMLP_MixedPrecision:
         self.ops.free(grad_h1_relu_fp32_ptr)
         self.ops.free(grad_h1_fp16_ptr)
         self.ops.free(grad_x_fp32_ptr)
+        # Free logits (returned by forward, not freed yet)
         self.ops.free(logits_fp32_ptr)
 
         # Free cached FP16 buffers from forward pass

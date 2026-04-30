@@ -178,98 +178,43 @@ void cuda_matmul_fp16_naive(
 
 namespace {
 
-// grad_B = A^T @ grad_C (FP16 A, FP32 grad_C, FP32 output)
+// Naive FP16 backward kernels - simpler, more precision control
+// grad_B = A^T @ grad_C: [K, N]
 // A: [M, K], grad_C: [M, N], grad_B: [K, N]
-__global__ void matmul_fp16_backward_B_kernel(
+__global__ void matmul_fp16_backward_B_naive_kernel(
     const __half* A, const float* grad_C, float* grad_B,
     int M, int K, int N) {
 
-    __shared__ __half As[16][16];  // A tile (transposed)
-    __shared__ float Cs[16][16];   // grad_C tile
-
-    int row = blockIdx.y * 16 + threadIdx.y;  // grad_B row (K dimension)
-    int col = blockIdx.x * 16 + threadIdx.x;  // grad_B col (N dimension)
-
-    float sum = 0.0f;
-
-    // Iterate over M dimension
-    for (int t = 0; t < (M + 15) / 16; ++t) {
-        // Load A tile (reading A^T means A[col_major])
-        int a_row = t * 16 + threadIdx.y;  // M dimension
-        int a_col = row;                    // K dimension
-        if (a_row < M && a_col < K) {
-            As[threadIdx.y][threadIdx.x] = A[a_row * K + a_col];
-        } else {
-            As[threadIdx.y][threadIdx.x] = __half(0);
-        }
-
-        // Load grad_C tile
-        int gc_row = t * 16 + threadIdx.y;  // M dimension
-        int gc_col = col;                    // N dimension
-        if (gc_row < M && gc_col < N) {
-            Cs[threadIdx.y][threadIdx.x] = grad_C[gc_row * N + gc_col];
-        } else {
-            Cs[threadIdx.y][threadIdx.x] = 0.0f;
-        }
-
-        __syncthreads();
-
-        for (int k = 0; k < 16; ++k) {
-            sum += __half2float(As[k][threadIdx.x]) * Cs[threadIdx.y][k];
-        }
-
-        __syncthreads();
-    }
+    int row = blockIdx.y * 16 + threadIdx.y;  // K dimension
+    int col = blockIdx.x * 16 + threadIdx.x;  // N dimension
 
     if (row < K && col < N) {
+        float sum = 0.0f;
+        for (int i = 0; i < M; ++i) {
+            // A^T[row][i] = A[i][row] = A[i * K + row]
+            sum += __half2float(A[i * K + row]) * grad_C[i * N + col];
+        }
         grad_B[row * N + col] = sum;
     }
 }
 
-// grad_A = grad_C @ B^T (FP16 B, FP32 grad_C, FP32 output)
+// grad_A = grad_C @ B^T: [M, K]
 // grad_C: [M, N], B: [K, N], grad_A: [M, K]
-__global__ void matmul_fp16_backward_A_kernel(
+__global__ void matmul_fp16_backward_A_naive_kernel(
     const float* grad_C, const __half* B, float* grad_A,
     int M, int N, int K) {
 
-    __shared__ float Cs[16][16];   // grad_C tile
-    __shared__ __half Bs[16][16];  // B tile (transposed)
-
-    int row = blockIdx.y * 16 + threadIdx.y;  // grad_A row (M dimension)
-    int col = blockIdx.x * 16 + threadIdx.x;  // grad_A col (K dimension)
-
-    float sum = 0.0f;
-
-    // Iterate over N dimension
-    for (int t = 0; t < (N + 15) / 16; ++t) {
-        // Load grad_C tile
-        int gc_row = row;
-        int gc_col = t * 16 + threadIdx.x;
-        if (gc_row < M && gc_col < N) {
-            Cs[threadIdx.y][threadIdx.x] = grad_C[gc_row * N + gc_col];
-        } else {
-            Cs[threadIdx.y][threadIdx.x] = 0.0f;
-        }
-
-        // Load B tile (reading B^T)
-        int b_row = col;                    // K dimension
-        int b_col = t * 16 + threadIdx.y;   // N dimension
-        if (b_row < K && b_col < N) {
-            Bs[threadIdx.y][threadIdx.x] = B[b_row * N + b_col];
-        } else {
-            Bs[threadIdx.y][threadIdx.x] = __half(0);
-        }
-
-        __syncthreads();
-
-        for (int k = 0; k < 16; ++k) {
-            sum += Cs[threadIdx.y][k] * __half2float(Bs[k][threadIdx.x]);
-        }
-
-        __syncthreads();
-    }
+    int row = blockIdx.y * 16 + threadIdx.y;  // M dimension
+    int col = blockIdx.x * 16 + threadIdx.x;  // K dimension
 
     if (row < M && col < K) {
+        float sum = 0.0f;
+        for (int i = 0; i < N; ++i) {
+            // B^T[col][i] = B[i][col] = B[col * N + i]... wait
+            // B: [K, N], B^T: [N, K]
+            // B^T[i][col] = B[col][i] = B[col * N + i]
+            sum += grad_C[row * N + i] * __half2float(B[col * N + i]);
+        }
         grad_A[row * K + col] = sum;
     }
 }
@@ -285,7 +230,7 @@ void cuda_matmul_fp16_backward(
     if (grad_B) {
         dim3 grid_B((N + 15) / 16, (K + 15) / 16);
         dim3 block_B(16, 16);
-        matmul_fp16_backward_B_kernel<<<grid_B, block_B, 0, stream>>>(
+        matmul_fp16_backward_B_naive_kernel<<<grid_B, block_B, 0, stream>>>(
             A, grad_C, grad_B, M, K, N);
     }
 
@@ -293,7 +238,7 @@ void cuda_matmul_fp16_backward(
     if (grad_A) {
         dim3 grid_A((K + 15) / 16, (M + 15) / 16);
         dim3 block_A(16, 16);
-        matmul_fp16_backward_A_kernel<<<grid_A, block_A, 0, stream>>>(
+        matmul_fp16_backward_A_naive_kernel<<<grid_A, block_A, 0, stream>>>(
             grad_C, B, grad_A, M, N, K);
     }
 
