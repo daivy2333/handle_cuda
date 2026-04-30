@@ -123,6 +123,11 @@ void cuda_matmul_fp16(
     const __half* A, const __half* B, float* C,
     int M, int N, int K, cudaStream_t stream = 0);
 
+// Tensor Core optimized matmul (requires compute capability 7.0+)
+void cuda_matmul_fp16_tensor_core(
+    const __half* A, const __half* B, float* C,
+    int M, int N, int K, cudaStream_t stream = 0);
+
 void cuda_matmul_fp16_backward(
     const float* grad_C, const __half* A, const __half* B,
     float* grad_A, float* grad_B,

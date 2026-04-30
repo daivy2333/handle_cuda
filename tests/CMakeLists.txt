@@ -106,6 +106,11 @@ target_link_libraries(test_fp16_tensor_core cuda_ops GTest::gtest GTest::gtest_m
 target_include_directories(test_fp16_tensor_core PRIVATE ${CMAKE_SOURCE_DIR}/include)
 gtest_discover_tests(test_fp16_tensor_core)
 
+add_executable(test_tensor_core_optimized test_tensor_core_optimized.cpp)
+target_link_libraries(test_tensor_core_optimized cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_tensor_core_optimized PRIVATE ${CMAKE_SOURCE_DIR}/include)
+gtest_discover_tests(test_tensor_core_optimized)
+
 add_executable(test_conv2d_fused test_conv2d_fused.cpp)
 target_link_libraries(test_conv2d_fused cuda_ops GTest::gtest GTest::gtest_main pthread)
 target_include_directories(test_conv2d_fused PRIVATE ${CMAKE_SOURCE_DIR}/include)

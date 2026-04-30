@@ -96,6 +96,94 @@ using namespace nvcuda::wmma;
 #define WMMA_N 16
 #define WMMA_K 16
 
+// Optimized Tensor Core kernel: multiple warps per block + shared memory staging
+// Each block computes 64x64 output region (4 warps x 2 warps = 8 tiles of 16x16)
+__global__ void tensor_core_matmul_optimized_kernel(
+    const __half* A, const __half* B, float* C,
+    int M, int N, int K) {
+
+    // Block computes 64x64 output region (8 tiles)
+    const int BLOCK_M = 64;
+    const int BLOCK_N = 64;
+    const int WARP_COUNT = 8;  // 4x2 layout
+
+    int block_row = blockIdx.y * BLOCK_M;
+    int block_col = blockIdx.x * BLOCK_N;
+
+    // Warp ID: 0-7, arranged as 4 columns x 2 rows
+    int warp_id = threadIdx.x / 32;
+    int lane_id = threadIdx.x % 32;
+
+    int warp_row_idx = warp_id / 4;   // 0 or 1
+    int warp_col_idx = warp_id % 4;   // 0, 1, 2, or 3
+
+    // Each warp computes 16x16 output tile
+    int warp_row = block_row + warp_row_idx * WMMA_M;
+    int warp_col = block_col + warp_col_idx * WMMA_N;
+
+    // Shared memory for cooperative loading
+    // Layout: [BLOCK_M][WMMA_K] for A, [WMMA_K][BLOCK_N] for B
+    __shared__ __half As[BLOCK_M][WMMA_K];
+    __shared__ __half Bs[WMMA_K][BLOCK_N];
+
+    // Accumulator
+    fragment<accumulator, WMMA_M, WMMA_N, WMMA_K, float> c_frag;
+    fill_fragment(c_frag, 0.0f);
+
+    // Loop over K dimension
+    for (int k_tile = 0; k_tile < K; k_tile += WMMA_K) {
+        // Cooperative load of A and B tiles
+        // 256 threads load 64*16 = 1024 elements for A, and 16*64 = 1024 for B
+        // Each thread loads 4 elements
+        for (int i = 0; i < 4; ++i) {
+            int tid = threadIdx.x + i * 256;
+
+            // Load A: [BLOCK_M][WMMA_K] = [64][16]
+            int a_row = tid / WMMA_K;
+            int a_col = tid % WMMA_K;
+            int global_a_row = block_row + a_row;
+            int global_a_col = k_tile + a_col;
+            if (global_a_row < M && global_a_col < K) {
+                As[a_row][a_col] = A[global_a_row * K + global_a_col];
+            } else {
+                As[a_row][a_col] = __half(0);
+            }
+
+            // Load B: [WMMA_K][BLOCK_N] = [16][64]
+            int b_row = tid / BLOCK_N;
+            int b_col = tid % BLOCK_N;
+            int global_b_row = k_tile + b_row;
+            int global_b_col = block_col + b_col;
+            if (global_b_row < K && global_b_col < N) {
+                Bs[b_row][b_col] = B[global_b_row * N + global_b_col];
+            } else {
+                Bs[b_row][b_col] = __half(0);
+            }
+        }
+
+        __syncthreads();
+
+        // Each warp loads its portion and computes
+        fragment<matrix_a, WMMA_M, WMMA_N, WMMA_K, __half, row_major> a_frag;
+        fragment<matrix_b, WMMA_M, WMMA_N, WMMA_K, __half, col_major> b_frag;
+
+        // Load A[warp_row:16, :] with stride WMMA_K
+        load_matrix_sync(a_frag, &As[warp_row_idx * WMMA_M][0], WMMA_K);
+        // Load B[:, warp_col:16] with stride BLOCK_N
+        load_matrix_sync(b_frag, &Bs[0][warp_col_idx * WMMA_N], BLOCK_N);
+
+        mma_sync(c_frag, a_frag, b_frag, c_frag);
+
+        __syncthreads();
+    }
+
+    // Store result
+    if (warp_row < M && warp_col < N) {
+        store_matrix_sync(C + warp_row * N + warp_col, c_frag, N, row_major);
+    }
+}
+
+// Basic Tensor Core kernel (for reference)
 __global__ void tensor_core_matmul_kernel(
     const __half* A, const __half* B, float* C,
     int M, int N, int K) {
@@ -147,6 +235,24 @@ void cuda_matmul_fp16(
 
     matmul_fp16_tiled_kernel<<<grid_dim, block_dim, 0, stream>>>(A, B, C, M, N, K);
     CUDA_CHECK(cudaGetLastError());
+}
+
+// Tensor Core optimized API (requires compute capability 7.0+)
+void cuda_matmul_fp16_tensor_core(
+    const __half* A, const __half* B, float* C,
+    int M, int N, int K, cudaStream_t stream) {
+
+    #if __CUDA_ARCH__ >= 700
+    // Use optimized kernel: 64x64 output per block, 256 threads
+    dim3 grid_dim((N + 63) / 64, (M + 63) / 64);
+    dim3 block_dim(256);  // 8 warps per block
+
+    tensor_core_matmul_optimized_kernel<<<grid_dim, block_dim, 0, stream>>>(A, B, C, M, N, K);
+    CUDA_CHECK(cudaGetLastError());
+    #else
+    // Fallback to tiled kernel if Tensor Core not available
+    cuda_matmul_fp16(A, B, C, M, N, K, stream);
+    #endif
 }
 
 void cuda_matmul_fp32_baseline(
