@@ -94,6 +94,14 @@ void cuda_conv2d_winograd_forward(
     int stride_h, int stride_w, int pad_h, int pad_w,
     cudaStream_t stream = 0);
 
+// Winograd F(6×6, 3×3) conv2d - higher parallelism than F(4×4)
+void cuda_conv2d_winograd_f6_forward(
+    const float* input, const float* weight, const float* bias,
+    float* output, float* temp_buffer,
+    int N, int C, int H, int W, int out_C,
+    int stride_h, int stride_w, int pad_h, int pad_w,
+    cudaStream_t stream = 0);
+
 // Fused Conv2d + ReLU kernel (reduces memory bandwidth)
 void cuda_conv2d_relu_fused(
     const float* input, const float* weight, const float* bias,
@@ -115,6 +123,11 @@ void cuda_matmul_fp16(
     const __half* A, const __half* B, float* C,
     int M, int N, int K, cudaStream_t stream = 0);
 
+void cuda_matmul_fp16_backward(
+    const float* grad_C, const __half* A, const __half* B,
+    float* grad_A, float* grad_B,
+    int M, int N, int K, cudaStream_t stream = 0);
+
 void cuda_matmul_fp32_baseline(
     const float* A, const float* B, float* C,
     int M, int N, int K, cudaStream_t stream = 0);
@@ -126,6 +139,9 @@ void cuda_matmul_fp16_naive(
 // FP16 conversion utilities
 void float_to_half(const float* in, __half* out, size_t n, cudaStream_t stream = 0);
 void half_to_float(const __half* in, float* out, size_t n, cudaStream_t stream = 0);
+
+// Gradient scaling (for mixed precision training)
+void cuda_scale_gradients(float* gradients, size_t size, float scale, cudaStream_t stream = 0);
 
 void cuda_maxpool2d(const float* input, float* output, int* indices,
                    const Pool2dDesc& desc, cudaStream_t stream = 0);

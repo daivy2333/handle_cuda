@@ -173,9 +173,44 @@ class CUDAOps:
         ]
         self.lib.cuda_maxpool2d_backward_f32.restype = None
 
+        # FP16 Matmul
+        self.lib.cuda_matmul_fp16_f32_output.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_matmul_fp16_f32_output.restype = None
+
+        self.lib.cuda_matmul_fp16_backward_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_matmul_fp16_backward_f32.restype = None
+
+        # FP16 conversion
+        self.lib.cuda_float_to_half.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t
+        ]
+        self.lib.cuda_float_to_half.restype = None
+
+        self.lib.cuda_half_to_float.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t
+        ]
+        self.lib.cuda_half_to_float.restype = None
+
+        # Gradient scaling
+        self.lib.cuda_scale_gradients_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_size_t, ctypes.c_float
+        ]
+        self.lib.cuda_scale_gradients_f32.restype = None
+
     def alloc(self, size):
         """Allocate GPU memory for size float32 elements."""
         return self.lib.cuda_alloc(size * 4)  # float32 = 4 bytes
+
+    def alloc_fp16(self, size):
+        """Allocate GPU memory for size fp16 elements (2 bytes each)."""
+        return self.lib.cuda_alloc(size * 2)  # fp16 = 2 bytes
 
     def free(self, ptr):
         """Free GPU memory."""
@@ -302,6 +337,75 @@ class CUDAOps:
         self.lib.cuda_matmul_backward_f32(
             grad_C_ptr, A_ptr, B_ptr, grad_A_ptr, grad_B_ptr, M, N, K)
         return grad_A_ptr, grad_B_ptr
+
+    def matmul_fp16(self, A_fp16_ptr, B_fp16_ptr, M, N, K, output_ptr=None):
+        """FP16 matmul: C (FP32) = A (FP16) @ B (FP16).
+
+        Args:
+            A_fp16_ptr: GPU pointer to FP16 A [M, K]
+            B_fp16_ptr: GPU pointer to FP16 B [K, N]
+            M, N, K: matrix dimensions
+            output_ptr: optional pre-allocated FP32 output pointer
+
+        Returns:
+            C_ptr: GPU pointer to FP32 result [M, N]
+        """
+        if output_ptr is None:
+            output_ptr = self.alloc(M * N)  # FP32 output
+        self.lib.cuda_matmul_fp16_f32_output(A_fp16_ptr, B_fp16_ptr, output_ptr, M, N, K)
+        return output_ptr
+
+    def matmul_fp16_backward(self, grad_C_fp32_ptr, A_fp16_ptr, B_fp16_ptr, M, N, K,
+                              grad_A_fp32_ptr=None, grad_B_fp32_ptr=None):
+        """FP16 matmul backward: gradients computed in FP32.
+
+        Args:
+            grad_C_fp32_ptr: GPU pointer to FP32 gradient [M, N]
+            A_fp16_ptr: GPU pointer to FP16 A [M, K]
+            B_fp16_ptr: GPU pointer to FP16 B [K, N]
+            M, N, K: matrix dimensions
+
+        Returns:
+            grad_A_fp32_ptr, grad_B_fp32_ptr: FP32 gradients
+        """
+        if grad_A_fp32_ptr is None:
+            grad_A_fp32_ptr = self.alloc(M * K)
+        if grad_B_fp32_ptr is None:
+            grad_B_fp32_ptr = self.alloc(K * N)
+        self.lib.cuda_matmul_fp16_backward_f32(
+            grad_C_fp32_ptr, A_fp16_ptr, B_fp16_ptr,
+            grad_A_fp32_ptr, grad_B_fp32_ptr, M, N, K)
+        return grad_A_fp32_ptr, grad_B_fp32_ptr
+
+    def float_to_half(self, fp32_ptr, fp16_ptr, size):
+        """Convert FP32 to FP16 on GPU.
+
+        Args:
+            fp32_ptr: GPU pointer to FP32 data
+            fp16_ptr: GPU pointer to FP16 output (must be pre-allocated)
+            size: number of elements
+        """
+        self.lib.cuda_float_to_half(fp32_ptr, fp16_ptr, size)
+
+    def half_to_float(self, fp16_ptr, fp32_ptr, size):
+        """Convert FP16 to FP32 on GPU.
+
+        Args:
+            fp16_ptr: GPU pointer to FP16 data
+            fp32_ptr: GPU pointer to FP32 output (must be pre-allocated)
+            size: number of elements
+        """
+        self.lib.cuda_half_to_float(fp16_ptr, fp32_ptr, size)
+
+    def scale_gradients(self, grad_ptr, size, scale_factor):
+        """Scale gradients for mixed precision training.
+
+        Args:
+            grad_ptr: GPU pointer to gradients (FP32)
+            size: number of elements
+            scale_factor: scaling factor (e.g., 128.0 for loss scaling)
+        """
+        self.lib.cuda_scale_gradients_f32(grad_ptr, size, scale_factor)
 
     def bias_add(self, input_ptr, bias_ptr, rows, cols, output_ptr=None):
         """Pure CUDA bias add: output = input + bias.

@@ -39,6 +39,7 @@ add_library(cuda_ops_shared SHARED
     src/matmul.cu
     src/matmul_fp16.cu
     src/half_utils.cu
+    src/loss_scaling.cu
     src/relu.cu
     src/bias_add.cu
     src/softmax.cu

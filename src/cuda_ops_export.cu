@@ -322,4 +322,36 @@ void cuda_maxpool2d_backward_f32(const float* grad_out, const int* indices, floa
     cuda_maxpool2d_backward(grad_out, nullptr, indices, grad_input, desc, 0);
 }
 
+// ============== FP16 Matmul C API ==============
+// FP16 matmul forward: C (FP32) = A (FP16) @ B (FP16)
+void cuda_matmul_fp16_f32_output(const void* A, const void* B, float* C,
+                                  int M, int N, int K) {
+    cuda_matmul_fp16(reinterpret_cast<const __half*>(A),
+                      reinterpret_cast<const __half*>(B), C, M, N, K, 0);
+}
+
+// FP16 matmul backward: gradients computed in FP32
+void cuda_matmul_fp16_backward_f32(const float* grad_C, const void* A, const void* B,
+                                    float* grad_A, float* grad_B,
+                                    int M, int N, int K) {
+    cuda_matmul_fp16_backward(grad_C,
+                              reinterpret_cast<const __half*>(A),
+                              reinterpret_cast<const __half*>(B),
+                              grad_A, grad_B, M, N, K, 0);
+}
+
+// FP16 conversion utilities
+void cuda_float_to_half(const float* in, void* out, size_t n) {
+    float_to_half(in, reinterpret_cast<__half*>(out), n, 0);
+}
+
+void cuda_half_to_float(const void* in, float* out, size_t n) {
+    half_to_float(reinterpret_cast<const __half*>(in), out, n, 0);
+}
+
+// Gradient scaling (for mixed precision training)
+void cuda_scale_gradients_f32(float* gradients, size_t size, float scale) {
+    cuda_scale_gradients(gradients, size, scale, 0);
+}
+
 } // extern "C"

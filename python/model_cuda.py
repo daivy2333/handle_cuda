@@ -289,5 +289,303 @@ def test_model_cuda():
     print("="*50)
 
 
+class SimpleMLP_MixedPrecision:
+    """
+    Mixed Precision MLP: FP32 master weights + FP16 working weights.
+
+    Pattern:
+    - FP32 master weights (w_fp32) for SGD update (numerical stability)
+    - FP16 working weights (w_fp16) for matmul (Tensor Core acceleration)
+    - FP16 activations for matmul inputs
+    - FP32 for bias_add, relu, cross_entropy (simple ops, no tensor core benefit)
+    - Loss scaling for gradient underflow prevention
+    """
+
+    def __init__(self, ops: CUDAOps, loss_scale=128.0):
+        self.ops = ops
+        self.loss_scale = loss_scale
+        np.random.seed(42)
+
+        # Initialize FP32 master weights
+        w1_np = (np.random.randn(784, 256) * np.sqrt(2.0/784)).astype(np.float32)
+        b1_np = np.zeros(256, dtype=np.float32)
+        w2_np = (np.random.randn(256, 128) * np.sqrt(2.0/256)).astype(np.float32)
+        b2_np = np.zeros(128, dtype=np.float32)
+        w3_np = (np.random.randn(128, 10) * np.sqrt(2.0/128)).astype(np.float32)
+        b3_np = np.zeros(10, dtype=np.float32)
+
+        # FP32 master weights on GPU
+        self.w1_fp32 = ops.to_device(w1_np)
+        self.b1_fp32 = ops.to_device(b1_np)
+        self.w2_fp32 = ops.to_device(w2_np)
+        self.b2_fp32 = ops.to_device(b2_np)
+        self.w3_fp32 = ops.to_device(w3_np)
+        self.b3_fp32 = ops.to_device(b3_np)
+
+        # FP16 working weights on GPU
+        self.w1_fp16 = ops.alloc_fp16(784 * 256)
+        self.w2_fp16 = ops.alloc_fp16(256 * 128)
+        self.w3_fp16 = ops.alloc_fp16(128 * 10)
+
+        # Convert master to working
+        ops.float_to_half(self.w1_fp32, self.w1_fp16, 784 * 256)
+        ops.float_to_half(self.w2_fp32, self.w2_fp16, 256 * 128)
+        ops.float_to_half(self.w3_fp32, self.w3_fp16, 128 * 10)
+
+        # FP32 gradient buffers
+        self.gw1_fp32 = ops.alloc(784 * 256)
+        self.gb1_fp32 = ops.alloc(256)
+        self.gw2_fp32 = ops.alloc(256 * 128)
+        self.gb2_fp32 = ops.alloc(128)
+        self.gw3_fp32 = ops.alloc(128 * 10)
+        self.gb3_fp32 = ops.alloc(10)
+
+        # Cache for backward
+        self.cache = {}
+
+    def __del__(self):
+        if hasattr(self, 'ops') and self.ops:
+            for attr in ['w1_fp32', 'w2_fp32', 'w3_fp32',
+                         'b1_fp32', 'b2_fp32', 'b3_fp32',
+                         'w1_fp16', 'w2_fp16', 'w3_fp16',
+                         'gw1_fp32', 'gw2_fp32', 'gw3_fp32',
+                         'gb1_fp32', 'gb2_fp32', 'gb3_fp32']:
+                if hasattr(self, attr):
+                    self.ops.free(getattr(self, attr))
+
+    def forward(self, x_fp32_ptr, batch):
+        """Mixed precision forward pass.
+
+        Args:
+            x_fp32_ptr: GPU pointer to FP32 input [batch, 784]
+            batch: batch size
+
+        Returns:
+            logits_ptr: GPU pointer to FP32 logits [batch, 10]
+        """
+        # Convert input to FP16
+        x_fp16_ptr = self.ops.alloc_fp16(batch * 784)
+        self.ops.float_to_half(x_fp32_ptr, x_fp16_ptr, batch * 784)
+
+        # Layer 1: FP16 matmul -> FP32 bias+relu
+        h1_fp32_ptr = self.ops.matmul_fp16(x_fp16_ptr, self.w1_fp16, batch, 256, 784)
+        h1_b_fp32_ptr = self.ops.bias_add(h1_fp32_ptr, self.b1_fp32, batch, 256)
+        self.ops.relu(h1_b_fp32_ptr, batch * 256)  # inplace
+
+        # Convert to FP16 for next matmul
+        h1_fp16_ptr = self.ops.alloc_fp16(batch * 256)
+        self.ops.float_to_half(h1_b_fp32_ptr, h1_fp16_ptr, batch * 256)
+
+        # Layer 2: FP16 matmul -> FP32 bias+relu
+        h2_fp32_ptr = self.ops.matmul_fp16(h1_fp16_ptr, self.w2_fp16, batch, 128, 256)
+        h2_b_fp32_ptr = self.ops.bias_add(h2_fp32_ptr, self.b2_fp32, batch, 128)
+        self.ops.relu(h2_b_fp32_ptr, batch * 128)  # inplace
+
+        # Convert to FP16 for next matmul
+        h2_fp16_ptr = self.ops.alloc_fp16(batch * 128)
+        self.ops.float_to_half(h2_b_fp32_ptr, h2_fp16_ptr, batch * 128)
+
+        # Layer 3: FP16 matmul -> FP32 bias
+        logits_fp32_ptr = self.ops.matmul_fp16(h2_fp16_ptr, self.w3_fp16, batch, 10, 128)
+        logits_b_fp32_ptr = self.ops.bias_add(logits_fp32_ptr, self.b3_fp32, batch, 10)
+
+        # Cache for backward
+        self.cache = {
+            'x_fp16': x_fp16_ptr,
+            'h1_fp16': h1_fp16_ptr,
+            'h2_fp16': h2_fp16_ptr,
+            'h1_relu_fp32': h1_b_fp32_ptr,
+            'h2_relu_fp32': h2_b_fp32_ptr,
+            'batch': batch
+        }
+
+        # Free intermediate FP32 matmul outputs
+        self.ops.free(h1_fp32_ptr)
+        self.ops.free(h2_fp32_ptr)
+        self.ops.free(logits_fp32_ptr)
+
+        return logits_b_fp32_ptr
+
+    def backward(self, logits_fp32_ptr, targets):
+        """Mixed precision backward pass with loss scaling.
+
+        Args:
+            logits_fp32_ptr: GPU pointer to FP32 logits
+            targets: numpy int32 array [batch]
+
+        Returns:
+            loss: scalar loss value
+        """
+        batch = self.cache['batch']
+
+        # Cross entropy loss (FP32)
+        loss, grad_logits_fp32_ptr = self.ops.cross_entropy_loss(logits_fp32_ptr, targets, batch, 10)
+
+        # Apply loss scaling
+        self.ops.scale_gradients(grad_logits_fp32_ptr, batch * 10, self.loss_scale)
+
+        # Backprop Layer 3: FP16 backward
+        h2_fp16_ptr = self.cache['h2_fp16']
+
+        grad_h2_fp32_ptr, grad_w3_fp32_ptr = self.ops.matmul_fp16_backward(
+            grad_logits_fp32_ptr, h2_fp16_ptr, self.w3_fp16,
+            batch, 10, 128,
+            grad_B_fp32_ptr=self.gw3_fp32
+        )
+
+        # Unscale weight gradients
+        self.ops.scale_gradients(self.gw3_fp32, 128 * 10, 1.0 / self.loss_scale)
+
+        # Bias backward (FP32)
+        _, grad_b3_fp32_ptr = self.ops.bias_add_backward(
+            grad_logits_fp32_ptr, batch, 10,
+            grad_bias_ptr=self.gb3_fp32
+        )
+
+        # Unscale bias gradient
+        self.ops.scale_gradients(self.gb3_fp32, 10, 1.0 / self.loss_scale)
+
+        # ReLU backward (FP32)
+        h2_relu_fp32_ptr = self.cache['h2_relu_fp32']
+        grad_h2_relu_fp32_ptr = self.ops.alloc(batch * 128)
+        self.ops.relu_backward(grad_h2_fp32_ptr, h2_relu_fp32_ptr, grad_h2_relu_fp32_ptr, batch * 128)
+
+        # Unscale and convert for next layer
+        self.ops.scale_gradients(grad_h2_relu_fp32_ptr, batch * 128, 1.0 / self.loss_scale)
+        grad_h2_fp16_ptr = self.ops.alloc_fp16(batch * 128)
+        self.ops.float_to_half(grad_h2_relu_fp32_ptr, grad_h2_fp16_ptr, batch * 128)
+
+        # Backprop Layer 2: FP16 backward
+        h1_fp16_ptr = self.cache['h1_fp16']
+
+        grad_h1_fp32_ptr, grad_w2_fp32_ptr = self.ops.matmul_fp16_backward(
+            grad_h2_fp16_ptr, h1_fp16_ptr, self.w2_fp16,
+            batch, 128, 256,
+            grad_B_fp32_ptr=self.gw2_fp32
+        )
+
+        self.ops.scale_gradients(self.gw2_fp32, 256 * 128, 1.0 / self.loss_scale)
+
+        _, grad_b2_fp32_ptr = self.ops.bias_add_backward(
+            grad_h2_relu_fp32_ptr, batch, 128,
+            grad_bias_ptr=self.gb2_fp32
+        )
+
+        self.ops.scale_gradients(self.gb2_fp32, 128, 1.0 / self.loss_scale)
+
+        # ReLU backward Layer 1
+        h1_relu_fp32_ptr = self.cache['h1_relu_fp32']
+        grad_h1_relu_fp32_ptr = self.ops.alloc(batch * 256)
+        self.ops.relu_backward(grad_h1_fp32_ptr, h1_relu_fp32_ptr, grad_h1_relu_fp32_ptr, batch * 256)
+
+        self.ops.scale_gradients(grad_h1_relu_fp32_ptr, batch * 256, 1.0 / self.loss_scale)
+        grad_h1_fp16_ptr = self.ops.alloc_fp16(batch * 256)
+        self.ops.float_to_half(grad_h1_relu_fp32_ptr, grad_h1_fp16_ptr, batch * 256)
+
+        # Backprop Layer 1: FP16 backward
+        x_fp16_ptr = self.cache['x_fp16']
+
+        grad_x_fp32_ptr, grad_w1_fp32_ptr = self.ops.matmul_fp16_backward(
+            grad_h1_fp16_ptr, x_fp16_ptr, self.w1_fp16,
+            batch, 256, 784,
+            grad_B_fp32_ptr=self.gw1_fp32
+        )
+
+        self.ops.scale_gradients(self.gw1_fp32, 784 * 256, 1.0 / self.loss_scale)
+
+        _, grad_b1_fp32_ptr = self.ops.bias_add_backward(
+            grad_h1_relu_fp32_ptr, batch, 256,
+            grad_bias_ptr=self.gb1_fp32
+        )
+
+        self.ops.scale_gradients(self.gb1_fp32, 256, 1.0 / self.loss_scale)
+
+        # Cleanup
+        self.ops.free(grad_logits_fp32_ptr)
+        self.ops.free(grad_h2_fp32_ptr)
+        self.ops.free(grad_h2_relu_fp32_ptr)
+        self.ops.free(grad_h2_fp16_ptr)
+        self.ops.free(grad_h1_fp32_ptr)
+        self.ops.free(grad_h1_relu_fp32_ptr)
+        self.ops.free(grad_h1_fp16_ptr)
+        self.ops.free(grad_x_fp32_ptr)
+        self.ops.free(logits_fp32_ptr)
+
+        self.cache.clear()
+
+        return loss
+
+    def update(self, lr):
+        """SGD update on FP32 master weights, sync to FP16 working."""
+        # Update FP32 masters
+        self.ops.sgd_update(self.w1_fp32, self.gw1_fp32, 784 * 256, lr)
+        self.ops.sgd_update(self.b1_fp32, self.gb1_fp32, 256, lr)
+        self.ops.sgd_update(self.w2_fp32, self.gw2_fp32, 256 * 128, lr)
+        self.ops.sgd_update(self.b2_fp32, self.gb2_fp32, 128, lr)
+        self.ops.sgd_update(self.w3_fp32, self.gw3_fp32, 128 * 10, lr)
+        self.ops.sgd_update(self.b3_fp32, self.gb3_fp32, 10, lr)
+
+        # Sync FP16 working weights from FP32 masters
+        self.ops.float_to_half(self.w1_fp32, self.w1_fp16, 784 * 256)
+        self.ops.float_to_half(self.w2_fp32, self.w2_fp16, 256 * 128)
+        self.ops.float_to_half(self.w3_fp32, self.w3_fp16, 128 * 10)
+
+    def predict(self, x_fp32_ptr, batch):
+        """Predict on GPU."""
+        logits_ptr = self.forward(x_fp32_ptr, batch)
+        logits = self.ops.to_host(logits_ptr, (batch, 10))
+        self.ops.free(logits_ptr)
+        self.cache.clear()
+        return logits.argmax(axis=1)
+
+
+def test_model_mixed_precision():
+    """Test the mixed precision MLP model."""
+    print("Testing SimpleMLP_MixedPrecision...")
+
+    ops = CUDAOps()
+    model = SimpleMLP_MixedPrecision(ops, loss_scale=128.0)
+
+    # Test forward
+    print("\n1. Testing forward pass...")
+    batch = 32
+    x = np.random.randn(batch, 784).astype(np.float32)
+    x_ptr = ops.to_device(x)
+    logits_ptr = model.forward(x_ptr, batch)
+    logits = ops.to_host(logits_ptr, (batch, 10))
+    print(f"   Logits shape: {logits.shape}")
+    assert logits.shape == (batch, 10)
+    assert not np.any(np.isnan(logits)), "Logits contain NaN!"
+    print("   Forward: PASSED")
+
+    # Test backward
+    print("\n2. Testing backward pass...")
+    targets = np.random.randint(0, 10, batch).astype(np.int32)
+    loss = model.backward(logits_ptr, targets)
+    print(f"   Loss: {loss:.4f}")
+    assert not np.isnan(loss), "Loss is NaN!"
+    print("   Backward: PASSED")
+
+    # Test update
+    print("\n3. Testing update...")
+    model.update(lr=0.01)
+    print("   Update: PASSED")
+
+    # Test predict
+    print("\n4. Testing predict...")
+    preds = model.predict(x_ptr, batch)
+    assert preds.shape == (batch,)
+    print(f"   Predictions: {preds[:5]}")
+    print("   Predict: PASSED")
+
+    ops.free(x_ptr)
+
+    print("\n" + "="*50)
+    print("Mixed precision model tests passed!")
+    print("="*50)
+
+
 if __name__ == '__main__':
     test_model_cuda()
+    print("\n")
+    test_model_mixed_precision()

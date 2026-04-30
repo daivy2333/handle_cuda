@@ -3,11 +3,13 @@ set(CUDA_OPS_SOURCES
     ${CMAKE_SOURCE_DIR}/src/matmul_fp16.cu
     ${CMAKE_SOURCE_DIR}/src/matmul_cublas.cu
     ${CMAKE_SOURCE_DIR}/src/half_utils.cu
+    ${CMAKE_SOURCE_DIR}/src/loss_scaling.cu
     ${CMAKE_SOURCE_DIR}/src/relu.cu
     ${CMAKE_SOURCE_DIR}/src/bias_add.cu
     ${CMAKE_SOURCE_DIR}/src/softmax.cu
     ${CMAKE_SOURCE_DIR}/src/conv2d.cu
     ${CMAKE_SOURCE_DIR}/src/conv2d_winograd.cu
+    ${CMAKE_SOURCE_DIR}/src/conv2d_winograd_f6.cu
     ${CMAKE_SOURCE_DIR}/src/conv2d_fused.cu
     ${CMAKE_SOURCE_DIR}/src/maxpool2d.cu
     ${CMAKE_SOURCE_DIR}/src/sigmoid.cu
@@ -94,6 +96,11 @@ target_link_libraries(test_conv2d_winograd cuda_ops GTest::gtest GTest::gtest_ma
 target_include_directories(test_conv2d_winograd PRIVATE ${CMAKE_SOURCE_DIR}/include)
 gtest_discover_tests(test_conv2d_winograd)
 
+add_executable(test_conv2d_winograd_f6 test_conv2d_winograd_f6.cpp)
+target_link_libraries(test_conv2d_winograd_f6 cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_conv2d_winograd_f6 PRIVATE ${CMAKE_SOURCE_DIR}/include)
+gtest_discover_tests(test_conv2d_winograd_f6)
+
 add_executable(test_fp16_tensor_core test_fp16_tensor_core.cpp)
 target_link_libraries(test_fp16_tensor_core cuda_ops GTest::gtest GTest::gtest_main pthread)
 target_include_directories(test_fp16_tensor_core PRIVATE ${CMAKE_SOURCE_DIR}/include)
@@ -108,3 +115,8 @@ add_executable(test_matmul_cublas test_matmul_cublas.cpp)
 target_link_libraries(test_matmul_cublas cuda_ops GTest::gtest GTest::gtest_main pthread)
 target_include_directories(test_matmul_cublas PRIVATE ${CMAKE_SOURCE_DIR}/include)
 gtest_discover_tests(test_matmul_cublas)
+
+add_executable(test_fp16_mixed_precision test_fp16_mixed_precision.cpp)
+target_link_libraries(test_fp16_mixed_precision cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_fp16_mixed_precision PRIVATE ${CMAKE_SOURCE_DIR}/include)
+gtest_discover_tests(test_fp16_mixed_precision)
