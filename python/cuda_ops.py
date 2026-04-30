@@ -414,6 +414,7 @@ class CUDAOps:
             input_ptr: GPU pointer to input [rows, cols]
             bias_ptr: GPU pointer to bias [cols]
             rows, cols: dimensions
+            output_ptr: Optional pre-allocated output buffer (inplace if same as input)
 
         Returns:
             output_ptr
@@ -422,6 +423,14 @@ class CUDAOps:
             output_ptr = self.alloc(rows * cols)
         self.lib.cuda_bias_add_f32(input_ptr, bias_ptr, output_ptr, rows, cols)
         return output_ptr
+
+    def bias_add_inplace(self, input_ptr, bias_ptr, rows, cols):
+        """Inplace bias add: input += bias."""
+        self.lib.cuda_bias_add_f32(input_ptr, bias_ptr, input_ptr, rows, cols)
+
+    def bias_add_outplace(self, input_ptr, bias_ptr, output_ptr, rows, cols):
+        """Outplace bias add with pre-allocated buffer."""
+        self.lib.cuda_bias_add_f32(input_ptr, bias_ptr, output_ptr, rows, cols)
 
     def bias_add_backward(self, grad_out_ptr, rows, cols,
                           grad_input_ptr=None, grad_bias_ptr=None):
