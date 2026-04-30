@@ -1,429 +1,290 @@
 # Architecture
 
+## 项目概述
+
+本项目实现了一个纯 CUDA 的 CNN 训练框架，用于 MNIST 手写数字识别。目标是复现 PyTorch 的核心训练流程，实现高性能的 GPU 算子。
+
+**最终性能**: CUDA 实现达到 PyTorch **77%** 的训练速度，MNIST 测试准确率 **88.35%**。
+
 ## 项目结构
 
 ```
 handle_cuda/
 ├── src/                   # CUDA kernels (.cu)
 │   ├── matmul.cu          # FP32 Tiled GEMM (1062 GFLOPS)
-│   ├── matmul_cublas.cu   # cuBLAS sgemm backend (7869 GFLOPS) ★NEW
-│   ├── matmul_fp16.cu     # FP16/Tensor Core MatMul + Backward ★优化
-│   ├── half_utils.cu      # FP32/FP16 转换工具
-│   ├── loss_scaling.cu    # 梯度缩放 (混合精度训练) ★NEW
-│   ├── relu.cu            # Vectorized ReLU
-│   ├── softmax.cu         # Warp-level Softmax
-│   ├── bias_add.cu        # Broadcasting
+│   ├── matmul_cublas.cu   # cuBLAS sgemm backend (7869 GFLOPS)
+│   ├── matmul_fp16.cu     # FP16/Tensor Core MatMul + Backward
 │   ├── conv2d.cu          # Naive + im2col + GEMM
+│   ├── conv2d_cublas.cu   # Conv2d cuBLAS backend (训练用) ★核心
 │   ├── conv2d_winograd.cu # Winograd F(2×2, 3×3)
-│   ├── conv2d_winograd_f6.cu # Winograd F(6×6, 3×3) ★NEW
+│   ├── conv2d_winograd_f6.cu # Winograd F(6×6, 3×3)
 │   ├── conv2d_fused.cu    # Conv→ReLU Kernel Fusion
-│   ├── conv2d_simple.cu   # Simple im2col reference
-│   ├── maxpool2d.cu       # Pooling
-│   ├── sigmoid.cu         # Sigmoid activation
-│   ├── tanh.cu            # Tanh activation
-│   ├── dropout.cu         # Dropout
+│   ├── relu.cu            # Vectorized ReLU + Out-of-place ★修复
+│   ├── softmax.cu         # Warp-level Softmax
 │   ├── cross_entropy.cu   # Cross entropy loss
 │   ├── sgd_update.cu      # SGD optimizer
+│   ├── maxpool2d.cu       # Pooling
 │   ├── flatten.cu         # Reshape
 │   └── cuda_ops_export.cu # C API export
 │
 ├── include/
 │   ├── cuda_ops.h         # Public API
-│   └── cuda_util.h        # Internal utilities + CUBLAS_CHECK
+│   └── cuda_util.h        # Internal utilities
 │
 ├── python/
-│   ├── cuda_ops.py        # ctypes binding (FP16 + 梯度缩放)
-│   ├── model_cuda.py      # Pure CUDA CNN + Mixed Precision MLP
-│   ├── model.py           # NumPy MLP (reference)
-│   ├── train_mnist_cuda.py# Training script
-│   ├── benchmark_compare.py# PyTorch vs CUDA comparison
-│   └── mnist_data.py      # Data loader
+│   ├── cuda_ops.py        # ctypes binding + 梯度裁剪 ★核心
+│   ├── model_cnn_cublas.py # Pure CUDA CNN (cuBLAS backend) ★核心
+│   ├── model_cnn_cuda.py  # Pure CUDA CNN (im2col backend)
+│   ├── model_cuda.py      # Pure CUDA MLP + Mixed Precision
+│   ├── benchmark_cnn_comparison.py # CUDA vs PyTorch benchmark
+│   └── mnist_data.py      # Data loader (PyTorch normalization)
 │
-├── tests/                 # GoogleTest (78 tests, 97% pass)
-│   ├── test_matmul_cublas.cpp   # cuBLAS 测试
-│   ├── test_conv2d_winograd_f6.cpp # Winograd F6 测试
-│   ├── test_fp16_mixed_precision.cpp # FP16 混合精度测试 ★NEW
-│   ├── test_tensor_core_optimized.cpp # Tensor Core 优化测试 ★NEW
-│   ├── test_edge_cases.cpp # Boundary tests (9 tests)
-│   ├── test_conv2d_winograd.cpp # Winograd F(2×2) 测试
-│   ├── test_fp16_tensor_core.cpp # FP16/Tensor Core tests
-│   ├── test_conv2d_fused.cpp # Kernel Fusion tests
+├── tests/                 # GoogleTest (78 tests)
+│   ├── test_conv2d_cublas.cpp # Conv2d cuBLAS 测试 ★核心
+│   ├── test_matmul_cublas.cpp # cuBLAS MatMul 测试
+│   ├── test_fp16_tensor_core.cpp
+│   ├── test_conv2d_winograd_f6.cpp
 │   └── ...                 # Operator tests
 │
 ├── scripts/
-│   └── run_with_cuda.sh   # WSL2 CUDA 环境脚本 ★NEW
+│   └── run_with_cuda.sh   # WSL2 CUDA 环境脚本
 │
 └── docs/
-    ├── PERFORMANCE_METRICS.md # 性能报告 (v1.6.0)
+    ├── PERFORMANCE_METRICS.md # 性能报告
     ├── ARCHITECTURE.md        # 本文档
-    ├── TESTING.md             # 测试说明
-    └── CUDA_GUIDE.md          # CUDA 指南
+    └── TESTING.md             # 测试说明
+```
+
+## CNN 模型架构
+
+```
+SimpleCNN (MNIST):
+Input [batch, 1, 28, 28]
+  → Conv1(1→16, kernel=3x3, stride=1, padding=1) [batch, 16, 28, 28]
+  → ReLU (out-of-place, 保存 pre-ReLU 值用于 backward)
+  → MaxPool(2x2, stride=2) [batch, 16, 14, 14]
+  → Conv2(16→32, kernel=3x3, stride=1, padding=1) [batch, 32, 14, 14]
+  → ReLU (out-of-place)
+  → MaxPool(2x2, stride=2) [batch, 32, 7, 7]
+  → Flatten [batch, 1568]
+  → FC(1568→10) [batch, 10]
+  → Softmax + CrossEntropy
+
+训练配置:
+- batch_size: 64
+- learning_rate: 0.01
+- optimizer: SGD with gradient clipping (max_norm=10.0)
+- epochs: 5
 ```
 
 ## 已实现算子
 
 | 算子 | Forward | Backward | 优化技术 | 性能 |
 |------|---------|----------|----------|------|
-| **MatMul FP32** | ✅ | ✅ | 32×32 Shared Memory Tiling | 1062 GFLOPS |
-| **MatMul cuBLAS** | ✅ | ✅ | cuBLAS sgemm backend | **7869 GFLOPS** |
-| **MatMul FP16** | ✅ | ✅ | Tensor Core WMMA | 1211 GFLOPS (1.07x) |
-| **MatMul FP16 Backward** | ✅ | ✅ | Tiled Kernel (精度修复) | max_error=0.0009 ★修复 |
-| **MatMul Tensor Core Opt** | ⚠️ 实验性 | - | Multi-warp + Shared staging | 1.06x (布局问题) |
-| **ReLU** | ✅ | ✅ | float4 Vectorization | 200 GB/s |
-| **Softmax** | ✅ | ✅ | Warp-Level Reduction | 249 GB/s |
-| **BiasAdd** | ✅ | ✅ | Broadcasting | - |
-| **Conv2d Naive** | ✅ | ✅ | - | 2.58 GFLOPS |
+| **MatMul FP32** | ✅ | ✅ | 32×32 Tiling | 1062 GFLOPS |
+| **MatMul cuBLAS** | ✅ | ✅ | cuBLAS sgemm | **7869 GFLOPS** |
+| **MatMul FP16** | ✅ | ✅ | Tensor Core WMMA | 1211 GFLOPS |
+| **ReLU** | ✅ | ✅ | float4 + out-of-place | 正确性修复 ★ |
+| **Softmax** | ✅ | ✅ | Warp Reduction | 249 GB/s |
 | **Conv2d im2col** | ✅ | ✅ | im2col + Tiled GEMM | 921 GFLOPS |
-| **Conv2d Winograd F(2×2)** | ✅ | - | 4×4 tile | 理论 2.25x |
-| **Conv2d Winograd F(6×6)** | ✅ | - | 8×8 tile | **理论 5x** |
+| **Conv2d cuBLAS** | ✅ | ✅ | im2col + cuBLAS sgemm | 训练核心 ★ |
+| **Conv2d Winograd** | ✅ | - | F(2×2) / F(6×6) | 理论 2.25x/5x |
 | **Conv+ReLU Fused** | ✅ | ✅ | Kernel Fusion | ~1.2x |
-| **MaxPool2d** | ✅ | ✅ | - | - |
-| **Sigmoid** | ✅ | ✅ | - | - |
-| **Tanh** | ✅ | ✅ | - | - |
-| **Dropout** | ✅ | ✅ | - | - |
-| **CrossEntropy** | ✅ | ✅ | Numerical stability | - |
-| **SGD Update** | ✅ | - | - | - |
-| **Flatten** | ✅ | ✅ | Memory copy | - |
+| **MaxPool2d** | ✅ | ✅ | Index caching | - |
+| **CrossEntropy** | ✅ | ✅ | Softmax fusion | 数值稳定 |
+| **SGD Update** | ✅ | - | Gradient clipping ★ | 防止爆炸 |
+| **Flatten** | ✅ | ✅ | Memory reshape | - |
 
-## 优化技术详解
+## 关键优化技术
 
-### 1. MatMul cuBLAS: 行业标准后端
+### 1. Conv2d cuBLAS Backend (训练核心)
 
 ```
-使用 NVIDIA cuBLAS 库的 sgemm 函数
+Conv2d = im2col + cuBLAS sgemm
 
 ┌─────────────────────────────────────┐
-│  cuBLAS sgemm 调度                   │
-│  ┌─────────────────────────────────┐│
-│  │ 深度优化的 Tensor Core 调度      ││
-│  │ 多级流水线                       ││
-│  │ 自适应 block size 选择           ││
-│  └─────────────────────────────────┘│
+│  Forward:                           │
+│  1. im2col: input → col_buffer       │
+│  2. sgemm: output = weight @ col     │
+│  3. reshape + bias add               │
 │                                      │
-│  RTX 4060 FP32 峰值: ~13 TFLOPS     │
-│  实测性能: 7869 GFLOPS (60% 峰值)   │
+│  Backward:                           │
+│  1. reshape grad_output              │
+│  2. grad_weight = grad @ col^T       │
+│  3. grad_input = weight^T @ grad     │
+│  4. col2im: grad_col → grad_input    │
 └─────────────────────────────────────┘
 
-效果: 7.4x vs 自实现 Tiled MatMul
-性能: 7869 GFLOPS @ 2048×2048
-适用: 所有矩阵乘法场景（推荐默认使用）
+性能优势:
+- cuBLAS sgemm: 7869 GFLOPS (7.4x vs 自实现)
+- 预分配 buffer: 避免 malloc/free 开销
+- 完整 backward: 支持端到端训练
 ```
 
-### 2. MatMul FP32: Shared Memory Tiling
+### 2. Out-of-place ReLU (正确性修复)
 
 ```
-每个 thread block 处理 32×32 输出 tile
+问题: In-place ReLU 修改了 forward output，
+      backward 时无法正确获取 pre-ReLU 值作为 mask
 
-┌─────────────────────────────────────┐
-│  A tile (32×32)    B tile (32×32)    │
-│  ┌──────────────┐  ┌──────────────┐  │
-│  │ Shared Mem   │  │ Shared Mem   │  │
-│  │ 32×32 floats │  │ 32×32 floats │  │
-│  └──────────────┘  └──────────────┘  │
-│                                      │
-│  每个 thread 计算 C[row][col]        │
-│  遍历 K/32 个 tiles                  │
-└─────────────────────────────────────┘
+解决: Out-of-place ReLU kernel
+      input (pre-ReLU) → output (post-ReLU)
+      input 保留用于 backward mask
 
-效果: 全局内存访问减少 32 倍
-性能: 1062 GFLOPS (2048×2048, FP32)
+__global__ void relu_out_of_place_kernel(
+    const float* input, float* output, size_t size) {
+    float val = input[idx];
+    output[idx] = (val > 0.0f) ? val : 0.0f;
+}
 ```
 
-### 3. MatMul FP16: Tensor Core (WMMA)
-
-```cpp
-// 使用 WMMA API 进行 Tensor Core 计算
-#include <mma.h>
-using namespace nvcuda::wmma;
-
-fragment<matrix_a, 16, 16, 16, half, row_major> a_frag;
-fragment<matrix_b, 16, 16, 16, half, row_major> b_frag;
-fragment<accumulator, 16, 16, 16, half> c_frag;
-
-load_matrix_sync(a_frag, a_ptr, 16);
-load_matrix_sync(b_frag, b_ptr, 16);
-fill_fragment(c_frag, 0.0f);
-mma_sync(c_frag, a_frag, b_frag, c_frag);
-store_matrix_sync(c_ptr, c_frag, 16, mem_row_major);
-
-效果: 利用 Tensor Core 硬件加速
-性能: 1211 GFLOPS (2048×2048, FP16)
-加速: 1.07x vs FP32 Tiled
-```
-
-### 4. Winograd F(6×6, 3×3) ★NEW
+### 3. 梯度裁剪 (防止爆炸)
 
 ```
-Winograd F(6×6) - cuDNN 同等 tile
+问题: Conv2 backward 梯度偶尔爆炸 (5003.32 → 权重爆炸)
 
-输入变换:  V = B^T @ U @ B (8×8)
-权重变换:  W = G @ w @ G^T (8×8)
-元素乘法:  M = V ⊙ W (element-wise, 8×8)
-输出变换:  Y = A^T @ M @ A (6×6 输出)
+解决: SGD update 前应用梯度裁剪
 
-变换矩阵 (wincnn.cookToomFilter([0,1,2,3,4,5,-1], 6, 3)):
-A^T = Vandermonde 矩阵 (值 1, 2, 4, 8, 16, 32 powers)
-G   = 权重变换矩阵
-B^T = 输入变换矩阵 (大值，最高 3125)
+def update(self, lr, max_grad_norm=10.0):
+    # Clip each gradient tensor
+    self.ops.gradient_clip(self.g_conv2_w_ptr, size, max_grad_norm)
+    
+    # Then SGD update
+    self.ops.sgd_update(param, grad, size, lr)
 
-输入 tile: 8×8 (m+r-1 = 6+3-1 = 8)
-输出 tile: 6×6
-效果: 81× → 36× 乘法 (每 tile，实际 2.25x)
-优势: 相比 F(2×2)，更大并行度 (36 输出/tile vs 4 输出/tile)
+效果: 训练稳定，Loss 正常下降
+      无裁剪: Epoch 3 准确率降到 63%
+      有裁剪: Epoch 5 准确率 88.35%
+```
+
+### 4. MatMul cuBLAS Backend
+
+```
+性能: 7869 GFLOPS @ 2048×2048×2048
+
+调用方式:
+cuda_matmul_cublas(A, B, C, M, N, K, stream);
+
+优势:
+- 深度优化的 Tensor Core 调度
+- 多级流水线
+- 自适应 block size
+
+适用: 所有矩阵乘法场景 (推荐默认)
+```
+
+### 5. Winograd Convolution
+
+```
+F(6×6, 3×3) - cuDNN 同等 tile size
+
+输入变换: V = B^T @ U @ B (8×8)
+权重变换: W = G @ w @ G^T (预计算)
+元素乘法: M = V ⊙ W
+输出变换: Y = A^T @ M @ A (6×6)
+
+理论加速: 81× → 36× 乘法/tile (实际 ~2x)
 适用: stride=1, pad=1, 3×3 kernel
 ```
 
-### 5. Winograd F(2×2, 3×3)
+## 训练流程
 
-```
-标准 Winograd 变换 (wincnn matrices):
+```python
+# Forward
+logits_ptr = model.forward(x_ptr, batch)
 
-输入变换:  V = B^T @ U @ B
-权重变换:  W = G @ w @ G^T
-元素乘法:  M = V ⊙ W (element-wise)
-输出变换:  Y = A^T @ M @ A
+# Forward 步骤:
+conv1_out = conv2d_cublas(x, w1, b1)  # cuBLAS sgemm
+conv1_relu = relu_out_of_place(conv1_out)  # 保存 pre-ReLU
+pool1_out = maxpool2d(conv1_relu)
+conv2_out = conv2d_cublas(pool1_out, w2, b2)
+conv2_relu = relu_out_of_place(conv2_out)
+pool2_out = maxpool2d(conv2_relu)
+flat = flatten(pool2_out)
+logits = matmul(flat, fc_w) + fc_b
 
-变换矩阵:
-A^T = [[1, 1, 1, 0], [0, 1, -1, 1]]
-G   = [[1, 0, 0], [1/2, 1/2, 1/2], [1/2, -1/2, 1/2], [0, 0, 1]]
-B^T = [[1, 0, -1, 0], [0, 1, 1, 0], [0, -1, 1, 0], [0, 1, 0, -1]]
+# Backward
+loss = model.backward(logits_ptr, targets)
 
-效果: 3×3 卷积乘法从 9 次 → 4 次 (每输出像素)
-理论: 2.25x 减少乘法
-适用: stride=1, pad=1, 3×3 kernel
-```
+# Backward 步骤:
+grad_logits = cross_entropy_loss_backward(logits, targets)
+grad_flat, grad_fc_w = matmul_backward(grad_logits, flat, fc_w)
+grad_pool2 = flatten_backward(grad_flat)
+grad_conv2_relu = maxpool2d_backward(grad_pool2)
+grad_conv2 = relu_backward(grad_conv2_relu, conv2_pre_relu)  # 用 pre-ReLU
+grad_pool1 = conv2d_cublas_backward(grad_conv2, pool1_out, w2)
+grad_conv1_relu = maxpool2d_backward(grad_pool1)
+grad_conv1 = relu_backward(grad_conv1_relu, conv1_pre_relu)
+grad_x = conv2d_cublas_backward(grad_conv1, x, w1)  # 不需要
 
-### 6. Kernel Fusion: Conv→ReLU
-
-```cpp
-// 融合 kernel: Conv2d + ReLU 在单 kernel 中完成
-__global__ void fused_conv_relu_kernel(
-    const float* input, const float* weight, float* output, ...) {
-    
-    // 1. 计算卷积输出 (在 shared memory 或 register)
-    float conv_out = compute_conv_pixel(...);
-    
-    // 2. 直接应用 ReLU，避免写入全局内存再读取
-    output[idx] = conv_out > 0 ? conv_out : 0;
-}
-
-效果: 
-- 减少一次 kernel launch (~5-10μs)
-- 减少一次全局内存读写
-- Conv 输出直接在 register/shared memory 中处理
-
-性能: ~1.2x 加速 vs 分离 kernels
+# Update (with gradient clipping)
+model.update(lr, max_grad_norm=10.0)
 ```
 
-### 7. Softmax: Warp-Level Reduction
+## 性能对比结果
 
-```cpp
-// 使用 shuffle 指令在 warp 内做 reduction
-__device__ float warp_reduce_max(float val) {
-    for (int offset = 16; offset > 0; offset /= 2) {
-        val = fmaxf(val, __shfl_down_sync(0xffffffff, val, offset));
-    }
-    return val;
-}
+| 指标 | CUDA cuBLAS | PyTorch |
+|------|-------------|---------|
+| 训练速度 | 6469 samples/s | 8372 samples/s |
+| 相对速度 | **77%** | 100% |
+| 最终准确率 | **88.35%** | 97.74% |
+| Epoch 时间 | 9.3s | 7.2s |
 
-// 每个 warp (32 threads) 处理一个 batch
-效果: 串行 max/sum → 并行 warp reduction
-性能: 249 GB/s, 17.8x vs naive
-```
+**速度差距原因**:
+- PyTorch 使用 cuDNN 深度优化 kernel
+- CUDA 实现的 Python binding 有数据传输开销
+- cuBLAS 虽高性能，但 im2col 有额外开销
 
-### 8. Conv2d im2col: 矩阵化方法
-
-```
-input [N, C, H, W] → im2col → col [C×K², N×out_H×out_W]
-                               ↓
-                     MatMul (复用优化后的 kernel)
-                               ↓
-                     output [N, out_C, out_H, out_W]
-
-效果: 复用优化后的 MatMul kernel
-性能: 921 GFLOPS, 357x vs naive
-```
-
-### 9. ReLU: Vectorized Memory Access
-
-```cpp
-// 使用 float4 一次读写 4 个元素
-float4 data = *reinterpret_cast<float4*>(ptr);
-
-效果: 更好的内存带宽利用
-性能: 200 GB/s, 4x vs naive
-```
-
-## Kernel 实现细节
-
-### cuBLAS Backend Kernel
-
-```cpp
-// matmul_cublas.cu 实现:
-
-// 静态 handle 初始化 (延迟初始化，线程安全)
-static cublasHandle_t handle = []{
-    cublasHandle_t h;
-    CUBLAS_CHECK(cublasCreate(&h));
-    return h;
-}();
-
-// cuBLAS sgemm 调用
-// 注意: cuBLAS 使用列优先存储，需要调整维度顺序
-cublasSgemm(handle,
-    CUBLAS_OP_N, CUBLAS_OP_N,
-    N, M, K,              // 交换 M, N 顺序
-    &alpha,
-    B, N,                 // B 是 M×K 在列优先下是 K×N
-    A, K,                 // A 是 M×K 在列优先下是 M×K
-    &beta,
-    C, N);
-```
-
-### Winograd F(6×6) Kernel 结构 ★NEW
-
-```cpp
-// conv2d_winograd_f6.cu 包含 4 个 kernels:
-
-// 1. 权重变换 (预计算，一次)
-winograd_f6_weight_transform_kernel
-  输入: weight [out_C, C, 3, 3]
-  输出: W [out_C, C, 8, 8] = G @ w @ G^T
-
-// 2. 输入变换 (每 batch)
-winograd_f6_input_transform_kernel
-  输入: input tile U [8, 8] (含 padding)
-  输出: V [8, 8] = B^T @ U @ B
-
-// 3. 元素乘法
-winograd_f6_elementwise_kernel
-  输入: V, W
-  输出: M = V ⊙ W (逐元素，累加输入通道)
-
-// 4. 输出变换
-winograd_f6_output_transform_kernel
-  输入: M [8, 8]
-  输出: Y [6, 6] = A^T @ M @ A
-```
-
-### Winograd F(2×2) Kernel 结构
-
-```cpp
-// conv2d_winograd.cu 包含 4 个 kernels:
-
-// 1. 权重变换 (预计算，一次)
-winograd_weight_transform_kernel
-  输入: weight [out_C, C, 3, 3]
-  输出: W [out_C, C, 4, 4] = G @ w @ G^T
-
-// 2. 输入变换 (每 batch)
-winograd_input_transform_kernel
-  输入: input tile U [4, 4]
-  输出: V [4, 4] = B^T @ U @ B
-
-// 3. 元素乘法
-winograd_elementwise_kernel
-  输入: V, W
-  输出: M = V ⊙ W (逐元素)
-
-// 4. 输出变换
-winograd_output_transform_kernel
-  输入: M [4, 4]
-  输出: Y [2, 2] = A^T @ M @ A
-```
-
-### FP16 Tensor Core Kernel 结构
-
-```cpp
-// matmul_fp16.cu 实现:
-
-// 1. FP32 → FP16 转换
-cuda_fp32_to_fp16(input_fp32, input_fp16, size);
-
-// 2. WMMA Tensor Core 计算
-wmma_matmul_kernel<<<...>>>(A_fp16, B_fp16, C_fp16, M, N, K);
-
-// 3. FP16 → FP32 转换 (可选)
-cuda_fp16_to_fp32(output_fp16, output_fp32, size);
-```
+**准确率差距原因**:
+- 梯度裁剪可能过于保守
+- ReLU backward 实现可能有精度差异
+- PyTorch 有更多隐式优化
 
 ## 设计原则
 
-1. **模块化设计** - 每个优化变体单独文件，便于选择
-2. **零外部依赖** - 仅依赖 CUDA Toolkit 和 GoogleTest (cuBLAS 为 CUDA 内置)
-3. **测试驱动** - 72 个单元测试，覆盖 forward/backward + 边界场景
-4. **可验证** - 与 PyTorch 数值对比，误差 < 1e-6
-5. **边界覆盖** - NaN/Inf、显存压力、batch=1、非方阵矩阵
-6. **向后传播** - 所有训练算子均有 backward 实现
+1. **正确性优先** - 所有算子有 backward 实现，梯度裁剪防止爆炸
+2. **模块化设计** - 每个优化变体单独文件，便于选择
+3. **零外部依赖** - 仅依赖 CUDA Toolkit 和 GoogleTest
+4. **测试驱动** - 78 个单元测试，覆盖 forward/backward + 边界场景
+5. **数值验证** - 与 PyTorch 对比，误差 < 1e-4
 
 ## API 设计
 
-### C API (cuda_ops_export.cu)
-
-```c
-// MatMul 变体
-void cuda_matmul_f32(const float* A, const float* B, float* C, 
-                      size_t M, size_t N, size_t K);
-void cuda_matmul_cublas(const float* A, const float* B, float* C,
-                         size_t M, size_t N, size_t K, cudaStream_t stream);
-void cuda_matmul_fp16(const half* A, const half* B, half* C,
-                       size_t M, size_t N, size_t K);
-
-// Conv2d 变体
-void cuda_conv2d_f32(...);            // Naive
-void cuda_conv2d_im2col_f32(...);     // im2col + GEMM
-void cuda_conv2d_winograd_f32(...);   // Winograd F(2×2)
-void cuda_conv2d_winograd_f6(...);    // Winograd F(6×6) ★NEW
-void cuda_conv2d_fused_f32(...);      // Conv→ReLU 融合
-
-// 激活函数
-void cuda_relu_f32(float* data, size_t size);
-void cuda_softmax_f32(const float* input, float* output,
-                      size_t batch, size_t classes);
-```
-
-### Python Binding (cuda_ops.py)
+### Python Binding (核心接口)
 
 ```python
 class CUDAOps:
-    def matmul(self, A, B, M, N, K): ...
-    def matmul_cublas(self, A, B, M, N, K): ...      # ★NEW
-    def matmul_fp16(self, A, B, M, N, K): ...
-    def conv2d(self, ...): ...              # 自动选择 im2col
-    def conv2d_im2col(self, ...): ...       # im2col + GEMM
-    def conv2d_winograd(self, ...): ...     # Winograd F(2×2)
-    def conv2d_winograd_f6(self, ...): ...  # Winograd F(6×6) ★NEW
-    def relu(self, data, size): ...
-    def softmax(self, input, output, batch, classes): ...
+    # 核心训练接口
+    def conv2d_cublas(self, input, weight, bias, N, C, H, W, out_C, kernel, ...): ...
+    def conv2d_cublas_backward(self, grad_out, input, weight, ...): ...
+    
+    # 辅助接口
+    def relu_out_of_place(self, input, output, size): ...
+    def relu_backward(self, grad_out, pre_relu, grad_in, size): ...
+    def maxpool2d(self, input, ...): ...
+    def maxpool2d_backward(self, grad_out, indices, ...): ...
+    
+    # 梯度控制
+    def gradient_clip(self, grad_ptr, size, max_norm): ...
+    def sgd_update(self, param, grad, size, lr): ...
+    
+    # 内存管理
+    def alloc(self, size): ...
+    def to_device(self, arr): ...
+    def to_host(self, ptr, shape): ...
+    def free(self, ptr): ...
 ```
 
 ## 性能选择指南
 
 | 场景 | 推荐实现 | 原因 |
 |------|----------|------|
-| **大矩阵乘法** | MatMul cuBLAS | 7869 GFLOPS，接近峰值 |
-| 小矩阵 (<512) | MatMul FP32 | cuBLAS 启动开销 |
-| FP16 训练 | MatMul FP16 | Tensor Core 加速 |
-| **3×3 卷积 stride=1** | Winograd F(6×6) | 与 cuDNN 同等 tile |
-| 其他卷积 | im2col + cuBLAS | 通用性 |
+| **CNN 训练** | Conv2d cuBLAS | 完整 backward，梯度裁剪 |
+| 大矩阵乘法 | MatMul cuBLAS | 7869 GFLOPS |
+| 3×3 卷积 stride=1 | Winograd F(6×6) | 理论 5x 加速 |
 | Conv→ReLU | Fused Kernel | 减少内存读写 |
-| 边界检查场景 | Naive Conv2d | 调试/验证 |
-
-## WSL2 环境支持
-
-```bash
-# WSL2 CUDA 检测问题解决方案
-# scripts/run_with_cuda.sh
-export LD_PRELOAD=/usr/lib/wsl/lib/libnvidia-ml.so.1:/usr/lib/wsl/lib/libcuda.so.1
-
-# 使用方式
-source scripts/run_with_cuda.sh
-ctest --output-on-failure
-
-# 或直接
-./bin/test_matmul_cublas
-```
+| 边界检查 | Naive Conv2d | 调试/验证 |
 
 ---
 
-*文档版本: 1.4.0 - 2026-04-30*
+*文档版本: 2.0.0 - 2026-04-30*

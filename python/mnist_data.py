@@ -37,6 +37,10 @@ def load_mnist(data_dir='data/mnist', train=True):
     with gzip.open(images_path, 'rb') as f:
         data = np.frombuffer(f.read(), dtype=np.uint8, offset=16)
     images = data.reshape(-1, 28, 28).astype(np.float32) / 255.0
+
+    # Normalize same as PyTorch (mean=0.1307, std=0.3081)
+    images = (images - 0.1307) / 0.3081
+
     images = images[:, np.newaxis, :, :]  # [N, 1, 28, 28]
 
     # Load labels

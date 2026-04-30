@@ -40,6 +40,15 @@ __global__ void relu_backward_kernel(const float* grad_out, const float* forward
     }
 }
 
+// Out-of-place ReLU: copies input to output first, then applies ReLU on output
+__global__ void relu_out_of_place_kernel(const float* input, float* output, size_t size) {
+    size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        float val = input[idx];
+        output[idx] = (val > 0.0f || isnan(val)) ? val : 0.0f;
+    }
+}
+
 } // namespace
 
 void cuda_relu(float* data, size_t size, cudaStream_t stream) {
@@ -49,6 +58,14 @@ void cuda_relu(float* data, size_t size, cudaStream_t stream) {
     if (num_blocks == 0) num_blocks = 1;
 
     relu_vectorized_kernel<<<num_blocks, block_size, 0, stream>>>(data, size);
+    CUDA_CHECK(cudaGetLastError());
+}
+
+// Out-of-place ReLU: input is preserved, output gets ReLU result
+void cuda_relu_out_of_place(const float* input, float* output, size_t size, cudaStream_t stream) {
+    int block_size = 256;
+    int num_blocks = get_num_blocks(size, block_size);
+    relu_out_of_place_kernel<<<num_blocks, block_size, 0, stream>>>(input, output, size);
     CUDA_CHECK(cudaGetLastError());
 }
 

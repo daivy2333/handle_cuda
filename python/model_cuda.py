@@ -340,6 +340,21 @@ class SimpleMLP_MixedPrecision:
         self.gw3_fp32 = ops.alloc(128 * 10)
         self.gb3_fp32 = ops.alloc(10)
 
+        # Pre-allocated FP16 buffers for forward pass (avoid repeated alloc/free)
+        self.x_fp16_buf = ops.alloc_fp16(64 * 784)  # batch=64
+        self.h1_fp16_buf = ops.alloc_fp16(64 * 256)
+        self.h2_fp16_buf = ops.alloc_fp16(64 * 128)
+
+        # Pre-allocated FP32 buffers for backward pass
+        self.grad_logits_buf = ops.alloc(64 * 10)
+        self.grad_h2_buf = ops.alloc(64 * 128)
+        self.grad_h2_relu_buf = ops.alloc(64 * 128)
+        self.grad_h2_fp16_buf = ops.alloc_fp16(64 * 128)
+        self.grad_h1_buf = ops.alloc(64 * 256)
+        self.grad_h1_relu_buf = ops.alloc(64 * 256)
+        self.grad_h1_fp16_buf = ops.alloc_fp16(64 * 256)
+        self.grad_x_buf = ops.alloc(64 * 784)
+
         # Cache for backward
         self.cache = {}
 

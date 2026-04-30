@@ -51,6 +51,7 @@ void cuda_bias_add_backward(const float* grad_out, float* grad_input,
                              cudaStream_t stream = 0);
 
 void cuda_relu(float* data, size_t size, cudaStream_t stream = 0);
+void cuda_relu_out_of_place(const float* input, float* output, size_t size, cudaStream_t stream = 0);
 void cuda_relu_backward(const float* grad_out, const float* forward_input, float* grad_in, size_t size, cudaStream_t stream = 0);
 
 void cuda_sigmoid(float* data, size_t size, cudaStream_t stream = 0);
@@ -147,6 +148,24 @@ void half_to_float(const __half* in, float* out, size_t n, cudaStream_t stream =
 
 // Gradient scaling (for mixed precision training)
 void cuda_scale_gradients(float* gradients, size_t size, float scale, cudaStream_t stream = 0);
+
+// Conv2d using im2col + cuBLAS sgemm (high performance)
+void cuda_conv2d_im2col_cublas(
+    const float* input, const float* weight, const float* bias,
+    float* output, float* col_buffer, float* gemm_buffer,
+    int N, int C, int H, int W, int out_C,
+    int kernel_h, int kernel_w,
+    int stride_h, int stride_w,
+    int pad_h, int pad_w);
+
+void cuda_conv2d_im2col_cublas_backward(
+    const float* grad_output, const float* input, const float* weight,
+    float* grad_input, float* grad_weight, float* grad_bias,
+    float* col_buffer, float* grad_col_buffer, float* grad_gemm_buffer,
+    int N, int C, int H, int W, int out_C,
+    int kernel_h, int kernel_w,
+    int stride_h, int stride_w,
+    int pad_h, int pad_w);
 
 void cuda_maxpool2d(const float* input, float* output, int* indices,
                    const Pool2dDesc& desc, cudaStream_t stream = 0);

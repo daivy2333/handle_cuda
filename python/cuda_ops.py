@@ -28,11 +28,17 @@ class CUDAOps:
         self.lib.cuda_memcpy_d2h.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t]
         self.lib.cuda_memcpy_d2h.restype = None
 
+        self.lib.cuda_memcpy_d2d.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t]
+        self.lib.cuda_memcpy_d2d.restype = None
+
         self.lib.cuda_sync.argtypes = []
         self.lib.cuda_sync.restype = None
 
         self.lib.cuda_memset.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_size_t]
         self.lib.cuda_memset.restype = None
+
+        self.lib.cuda_gradient_clip.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_float]
+        self.lib.cuda_gradient_clip.restype = ctypes.c_float
 
         # CrossEntropyLoss
         self.lib.cuda_cross_entropy_loss.argtypes = [
@@ -91,6 +97,9 @@ class CUDAOps:
         self.lib.cuda_relu_f32.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
         self.lib.cuda_relu_f32.restype = None
 
+        self.lib.cuda_relu_out_of_place_f32.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t]
+        self.lib.cuda_relu_out_of_place_f32.restype = None
+
         self.lib.cuda_relu_backward_f32.argtypes = [
             ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t
         ]
@@ -126,6 +135,29 @@ class CUDAOps:
             ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int
         ]
         self.lib.cuda_conv2d_im2col_f32.restype = None
+
+        # Conv2d cuBLAS (highest performance)
+        self.lib.cuda_conv2d_im2col_cublas_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_conv2d_im2col_cublas_f32.restype = None
+
+        # Conv2d cuBLAS backward
+        self.lib.cuda_conv2d_im2col_cublas_backward_f32.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int
+        ]
+        self.lib.cuda_conv2d_im2col_cublas_backward_f32.restype = None
 
         self.lib.cuda_conv2d_backward_f32.argtypes = [
             ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
@@ -228,9 +260,17 @@ class CUDAOps:
         self.lib.cuda_memcpy_d2h(result.ctypes.data, ptr, result.nbytes)
         return result
 
+    def copy_device(self, dst_ptr, src_ptr, size):
+        """Copy GPU memory to GPU memory (device-to-device)."""
+        self.lib.cuda_memcpy_d2d(dst_ptr, src_ptr, size)
+
     def sync(self):
         """Synchronize device."""
         self.lib.cuda_sync()
+
+    def gradient_clip(self, grad_ptr, size, max_norm=1.0):
+        """Clip gradient to max_norm. Returns original norm."""
+        return self.lib.cuda_gradient_clip(grad_ptr, size, max_norm)
 
     def cross_entropy_loss(self, logits_ptr, targets, batch, classes):
         """Compute cross entropy loss and gradient.
@@ -447,6 +487,10 @@ class CUDAOps:
         """Inplace ReLU activation."""
         self.lib.cuda_relu_f32(data_ptr, size)
 
+    def relu_out_of_place(self, input_ptr, output_ptr, size):
+        """Out-of-place ReLU: input is preserved, output gets ReLU result."""
+        self.lib.cuda_relu_out_of_place_f32(input_ptr, output_ptr, size)
+
     def relu_backward(self, grad_out_ptr, forward_input_ptr, grad_in_ptr, size):
         """ReLU backward."""
         self.lib.cuda_relu_backward_f32(
@@ -541,6 +585,92 @@ class CUDAOps:
             stride_h, stride_w, pad_h, pad_w
         )
         return output_ptr
+
+    def conv2d_cublas(self, input_ptr, weight_ptr, bias_ptr,
+                      N, C, H, W, out_C, kernel_h, kernel_w,
+                      stride_h=1, stride_w=1, pad_h=0, pad_w=0,
+                      col_buffer=None, gemm_buffer=None, output_ptr=None):
+        """Conv2d using im2col + cuBLAS sgemm (highest performance).
+
+        Args:
+            input_ptr: GPU pointer to input [N, C, H, W]
+            weight_ptr: GPU pointer to weight [out_C, C, kernel_h, kernel_w]
+            bias_ptr: GPU pointer to bias [out_C] (can be None)
+            ... dimensions ...
+
+        Returns:
+            output_ptr: GPU pointer to output [N, out_C, out_H, out_W]
+        """
+        out_H = (H + 2 * pad_h - kernel_h) // stride_h + 1
+        out_W = (W + 2 * pad_w - kernel_w) // stride_w + 1
+
+        if output_ptr is None:
+            output_ptr = self.alloc(N * out_C * out_H * out_W)
+
+        # Allocate im2col buffers if not provided
+        col_rows = C * kernel_h * kernel_w
+        col_cols = N * out_H * out_W
+        if col_buffer is None:
+            col_buffer = self.alloc(col_rows * col_cols)
+        if gemm_buffer is None:
+            gemm_buffer = self.alloc(out_C * col_cols)
+
+        bias_arg = bias_ptr if bias_ptr is not None else None
+
+        self.lib.cuda_conv2d_im2col_cublas_f32(
+            input_ptr, weight_ptr, bias_arg, output_ptr,
+            col_buffer, gemm_buffer,
+            N, C, H, W, out_C, kernel_h, kernel_w,
+            stride_h, stride_w, pad_h, pad_w
+        )
+        return output_ptr
+
+    def conv2d_cublas_backward(self, grad_out_ptr, input_ptr, weight_ptr,
+                                N, C, H, W, out_C, kernel_h, kernel_w,
+                                stride_h, stride_w, pad_h, pad_w,
+                                grad_input_ptr=None, grad_weight_ptr=None, grad_bias_ptr=None,
+                                col_buffer=None, grad_col_buffer=None, grad_gemm_buffer=None):
+        """Conv2d backward using cuBLAS sgemm (highest performance).
+
+        Args:
+            grad_out_ptr: GPU pointer to gradient of output [N, out_C, out_H, out_W]
+            input_ptr: GPU pointer to forward input [N, C, H, W]
+            weight_ptr: GPU pointer to weight [out_C, C, kernel_h, kernel_w]
+            ... dimensions ...
+
+        Returns:
+            grad_input_ptr, grad_weight_ptr, grad_bias_ptr (GPU pointers)
+        """
+        out_H = (H + 2 * pad_h - kernel_h) // stride_h + 1
+        out_W = (W + 2 * pad_w - kernel_w) // stride_w + 1
+
+        col_rows = C * kernel_h * kernel_w
+        col_cols = N * out_H * out_W
+
+        # Allocate gradient outputs if not provided
+        if grad_input_ptr is None:
+            grad_input_ptr = self.alloc(N * C * H * W)
+        if grad_weight_ptr is None:
+            grad_weight_ptr = self.alloc(out_C * C * kernel_h * kernel_w)
+        if grad_bias_ptr is None:
+            grad_bias_ptr = self.alloc(out_C)
+
+        # Allocate buffers if not provided
+        if col_buffer is None:
+            col_buffer = self.alloc(col_rows * col_cols)
+        if grad_col_buffer is None:
+            grad_col_buffer = self.alloc(col_rows * col_cols)
+        if grad_gemm_buffer is None:
+            grad_gemm_buffer = self.alloc(out_C * col_cols)
+
+        self.lib.cuda_conv2d_im2col_cublas_backward_f32(
+            grad_out_ptr, input_ptr, weight_ptr,
+            grad_input_ptr, grad_weight_ptr, grad_bias_ptr,
+            col_buffer, grad_col_buffer, grad_gemm_buffer,
+            N, C, H, W, out_C, kernel_h, kernel_w,
+            stride_h, stride_w, pad_h, pad_w
+        )
+        return grad_input_ptr, grad_weight_ptr, grad_bias_ptr
 
     def conv2d_backward(self, grad_out_ptr, input_ptr, weight_ptr,
                         N, C, H, W, out_C, kernel_h, kernel_w,

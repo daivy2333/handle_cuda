@@ -43,6 +43,11 @@ void cuda_memcpy_d2h(void* dst, const void* src, size_t size) {
     CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost));
 }
 
+// Device to device copy
+void cuda_memcpy_d2d(void* dst, const void* src, size_t size) {
+    CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice));
+}
+
 // Device synchronization
 void cuda_sync() {
     CUDA_CHECK(cudaDeviceSynchronize());
@@ -51,6 +56,31 @@ void cuda_sync() {
 // Memory set
 void cuda_memset(void* ptr, int value, size_t size) {
     CUDA_CHECK(cudaMemset(ptr, value, size));
+}
+
+// Gradient clipping: compute L2 norm and scale if exceeds max_norm
+// Returns the original norm (before clipping)
+float cuda_gradient_clip(float* grad, size_t size, float max_norm) {
+    // Compute L2 norm on CPU (simple approach for now)
+    float* host_grad = new float[size];
+    CUDA_CHECK(cudaMemcpy(host_grad, grad, size * sizeof(float), cudaMemcpyDeviceToHost));
+
+    float norm = 0.0f;
+    for (size_t i = 0; i < size; ++i) {
+        norm += host_grad[i] * host_grad[i];
+    }
+    norm = sqrtf(norm);
+
+    if (norm > max_norm) {
+        float scale = max_norm / norm;
+        for (size_t i = 0; i < size; ++i) {
+            host_grad[i] *= scale;
+        }
+        CUDA_CHECK(cudaMemcpy(grad, host_grad, size * sizeof(float), cudaMemcpyHostToDevice));
+    }
+
+    delete[] host_grad;
+    return norm;
 }
 
 // Allocate and copy host to device
@@ -114,6 +144,12 @@ void cuda_bias_add_backward_f32(const float* grad_out, float* grad_input,
 // data: [size]
 void cuda_relu_f32(float* data, size_t size) {
     cuda_relu(data, size, 0);
+}
+
+// ReLU out-of-place: input is preserved, output gets ReLU result
+// input/output: [size]
+void cuda_relu_out_of_place_f32(const float* input, float* output, size_t size) {
+    cuda_relu_out_of_place(input, output, size, 0);
 }
 
 // ReLU backward
@@ -352,6 +388,36 @@ void cuda_half_to_float(const void* in, float* out, size_t n) {
 // Gradient scaling (for mixed precision training)
 void cuda_scale_gradients_f32(float* gradients, size_t size, float scale) {
     cuda_scale_gradients(gradients, size, scale, 0);
+}
+
+// ============== Conv2d cuBLAS C API ==============
+// Conv2d using im2col + cuBLAS sgemm (high performance)
+void cuda_conv2d_im2col_cublas_f32(
+    const float* input, const float* weight, const float* bias,
+    float* output, float* col_buffer, float* gemm_buffer,
+    int N, int C, int H, int W, int out_C,
+    int kernel_h, int kernel_w,
+    int stride_h, int stride_w,
+    int pad_h, int pad_w) {
+    cuda_conv2d_im2col_cublas(input, weight, bias, output, col_buffer, gemm_buffer,
+                              N, C, H, W, out_C, kernel_h, kernel_w,
+                              stride_h, stride_w, pad_h, pad_w);
+}
+
+// Conv2d cuBLAS backward
+void cuda_conv2d_im2col_cublas_backward_f32(
+    const float* grad_output, const float* input, const float* weight,
+    float* grad_input, float* grad_weight, float* grad_bias,
+    float* col_buffer, float* grad_col_buffer, float* grad_gemm_buffer,
+    int N, int C, int H, int W, int out_C,
+    int kernel_h, int kernel_w,
+    int stride_h, int stride_w,
+    int pad_h, int pad_w) {
+    cuda_conv2d_im2col_cublas_backward(grad_output, input, weight,
+                                       grad_input, grad_weight, grad_bias,
+                                       col_buffer, grad_col_buffer, grad_gemm_buffer,
+                                       N, C, H, W, out_C, kernel_h, kernel_w,
+                                       stride_h, stride_w, pad_h, pad_w);
 }
 
 } // extern "C"

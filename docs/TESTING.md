@@ -16,45 +16,37 @@ make -j$(nproc)
 source scripts/run_with_cuda.sh
 ctest --output-on-failure
 
-# 或直接设置环境变量
-export LD_PRELOAD=/usr/lib/wsl/lib/libnvidia-ml.so.1:/usr/lib/wsl/lib/libcuda.so.1
-ctest --output-on-failure
-
 # 运行所有测试 (78 tests)
 ctest --output-on-failure
 
 # 运行单个测试
 ./bin/test_matmul
 ./bin/test_matmul_cublas      # cuBLAS 后端测试
-./bin/test_relu
-./bin/test_softmax
 ./bin/test_conv2d
-./bin/test_conv2d_winograd    # Winograd F(2×2) 测试
-./bin/test_conv2d_winograd_f6 # Winograd F(6×6) 测试
+./bin/test_conv2d_cublas      # Conv2d cuBLAS 测试 ★核心
+./bin/test_conv2d_winograd    # Winograd F(2×2)
+./bin/test_conv2d_winograd_f6 # Winograd F(6×6)
 ./bin/test_fp16_tensor_core   # Tensor Core 测试
-./bin/test_fp16_mixed_precision # FP16 混合精度测试 ★NEW
-./bin/test_tensor_core_optimized # Tensor Core 优化测试 ★NEW
 ./bin/test_conv2d_fused       # Kernel Fusion 测试
 ./bin/test_edge_cases         # 边界测试
+./bin/test_relu               # ReLU 测试 (含 out-of-place)
+./bin/test_softmax            # Softmax 测试
 ```
 
 ## 测试覆盖
 
 | 算子 | Forward | Backward | 边界测试 | 性能测试 |
 |------|---------|----------|----------|----------|
-| MatMul FP32 | ✅ | ✅ | 转置, 大矩阵, 非方阵 | ✅ |
+| MatMul FP32 | ✅ | ✅ | 转置, 大矩阵 | ✅ |
 | MatMul cuBLAS | ✅ | ✅ | 与自实现对比 | ✅ |
-| MatMul FP16 | ✅ | ✅ | FP32/FP16 转换 | ✅ |
-| MatMul FP16 Backward | ✅ | ✅ | 精度验证 | ✅ ★NEW |
-| Tensor Core Opt | ⚠️ 实验性 | - | 正确性问题待修复 | ✅ ★NEW |
-| ReLU | ✅ | ✅ | 全正, 全负, NaN/Inf | ✅ |
-| Softmax | ✅ | ✅ | 和为1, 非负, batch=1, NaN/Inf | ✅ |
-| BiasAdd | ✅ | ✅ | 单行, 大矩阵 | - |
-| Conv2d Naive | ✅ | ✅ | 无padding, 非方阵 | - |
 | Conv2d im2col | ✅ | ✅ | im2col 验证 | ✅ |
+| **Conv2d cuBLAS** | ✅ | ✅ | forward/backward 正确性 | ✅ ★核心 |
 | Conv2d Winograd F(2×2) | ✅ | - | im2col 对比 | ✅ |
-| Conv2d Winograd F(6×6) | ✅ | - | im2col 对比, 多通道, 多tile | ✅ |
+| Conv2d Winograd F(6×6) | ✅ | - | im2col 对比, 多通道 | ✅ |
 | Conv+ReLU Fused | ✅ | ✅ | 分离 kernel 对比 | ✅ |
+| ReLU (out-of-place) | ✅ | ✅ | NaN/Inf, mask正确性 | ✅ ★修复 |
+| Softmax | ✅ | ✅ | 和为1, NaN/Inf | ✅ |
+| BiasAdd | ✅ | ✅ | 单行, 大矩阵 | - |
 | MaxPool2d | ✅ | ✅ | padding, batch | - |
 | Sigmoid | ✅ | ✅ | - | - |
 | Tanh | ✅ | ✅ | 极值 | - |
@@ -63,31 +55,41 @@ ctest --output-on-failure
 | SGD Update | ✅ | - | 零梯度 | - |
 | Flatten | ✅ | ✅ | MNIST size | - |
 
-**边界测试 (Edge Cases)**:
-- 非方阵矩阵：MatMul 512×2048, Conv2d 非对称输入
-- batch_size 边界：batch=1（最小批次）
-- 显存压力：4096×4096, 8192×8192（显存不足时自动跳过）
-- NaN/Inf 容错：Softmax +Inf 输入, ReLU NaN 输入
+**总计**: 78 个测试，**100% 通过率**
 
-**总计**: 72 个测试，**100% 通过率**
+## 核心测试详解
 
-## 新增测试详解
-
-### cuBLAS MatMul 测试 (test_matmul_cublas.cpp) ★NEW
+### Conv2d cuBLAS 测试 (test_conv2d_cublas.cpp) ★核心
 
 ```cpp
-// 测试 1: Correctness
-// 验证 cuBLAS 结果与自实现 MatMul 匹配
-// 矩阵: 512×128×256, 误差阈值: 1e-3
+// 测试 1: ForwardCorrectness
+// 验证 cuBLAS forward 与 im2col 结果匹配
+// 矩阵: N=64, C=16, H=28, out_C=32
+// 误差阈值: 1e-4
 
-// 测试 2: Performance
-// 测量 cuBLAS GFLOPS 性能
-// 矩阵: 2048×2048×2048, 10 iterations
-// 目标: > 100 GFLOPS (GPU frequency varies in ctest)
-// 实测: 7869 GFLOPS (孤立运行)
+// 测试 2: BackwardCorrectness  
+// 验证 cuBLAS backward 梯度计算正确
+// grad_bias sum: 16.0 (每 channel)
+// grad_weight sum: 620.0 (累加)
+
+// 测试 3: CompareWithIm2col
+// 验证 cuBLAS vs im2col forward 匹配
+// 误差阈值: 1e-4
 ```
 
-### Winograd F(6×6) 测试 (test_conv2d_winograd_f6.cpp) ★NEW
+### ReLU 测试 (test_relu.cpp) ★修复验证
+
+```cpp
+// 测试: Out-of-place correctness
+// 验证 input 保留，output 为 post-ReLU
+// 确保 backward mask 正确
+
+// 测试: Backward with negative values
+// 验证 negative 区域 gradient 为 0
+// 正确使用 pre-ReLU 值作为 mask
+```
+
+### Winograd F(6×6) 测试 (test_conv2d_winograd_f6.cpp)
 
 ```cpp
 // 测试 1: BasicCorrectness
@@ -95,55 +97,13 @@ ctest --output-on-failure
 // 输出: 6×6 全9, 与 im2col 匹配
 
 // 测试 2: MultiChannel
-// 输入: C=2, out_C=2, 验证多通道累加正确性
+// 输入: C=2, out_C=2, 验证多通道累加
 
 // 测试 3: LargerInput
 // 输入: 14×14 → 12×12 输出 (2×2 tiles)
-// 验证多 tile 场景正确性
 
 // 测试 4: NonUniformInput
-// 输入: 递增序列 (0, 1, 2, ...)
-// 权重: [1, 2, 3; 4, 5, 6; 7, 8, 9]
-// 验证变换矩阵正确性
-// 误差阈值: 2.0 (大变换值导致的 FP 精度放大)
-```
-
-### Winograd F(2×2) 测试 (test_conv2d_winograd.cpp)
-
-```cpp
-// 测试 1: DebugTileMapping
-// 验证 Winograd tile 映射正确性
-// 输入: 4×4 全1, 权重: 3×3 全1
-// 期望输出: 与 im2col 匹配 (4, 6, 6, 9)
-
-// 测试 2: SimpleConvReference  
-// 验证 im2col 在更大输入上的正确性
-// 输入: 5×5 序列, 权重: 3×3 全1
-// 期望: 直接卷积 vs im2col 匹配
-```
-
-### FP16 Tensor Core 测试 (test_fp16_tensor_core.cpp)
-
-```cpp
-// 测试 1: FP16Conversion
-// 验证 FP32 ↔ FP16 转换正确性
-
-// 测试 2: MatmulCorrectness
-// 验证 FP16 matmul 结果与 FP32 匹配 (误差 < 1e-3)
-
-// 测试 3: MatmulPerformance
-// 测量 FP16 vs FP32 加速比
-
-// 测试 4: SmallMatmul
-// 验证小矩阵 Tensor Core 正确性
-```
-
-### Kernel Fusion 测试 (test_conv2d_fused.cpp)
-
-```cpp
-// 测试: ConvReluCorrectness
-// 验证融合 kernel 与分离 kernels 结果匹配
-// Conv2d im2col → ReLU == Conv2d+ReLU fused
+// 输入: 递增序列, 验证变换矩阵正确性
 ```
 
 ## 误差标准
@@ -153,13 +113,11 @@ ctest --output-on-failure
 | ReLU | 0 (精确) |
 | BiasAdd | 1e-6 |
 | Softmax | 1e-5 |
-| MatMul FP32 | 5e-2 (大矩阵浮点累积误差) |
-| MatMul cuBLAS | 1e-3 (与自实现对比) |
-| MatMul FP16 | 1e-3 (FP16 精度限制) |
+| MatMul FP32 | 5e-2 (大矩阵累积误差) |
+| MatMul cuBLAS | 1e-3 |
 | Conv2d | 1e-4 |
-| Winograd F(2×2) | 1e-2 (变换矩阵误差) |
-| Winograd F(6×6) | 2.0 (大变换值 FP 精度放大) |
-| Kernel Fusion | 0 (精确) |
+| Conv2d cuBLAS | 1e-4 ★ |
+| Winograd | 1e-2 ~ 2.0 (变换精度) |
 
 ## 测试方法
 
@@ -177,67 +135,47 @@ EXPECT_LT(relative_error, threshold);
 
 | 日期 | Bug | 修复 |
 |------|-----|------|
-| 2026-04-30 | Winograd F(6×6) 输出不正确 (16, -8 等) | 使用 wincnn.cookToomFilter 生成正确变换矩阵 |
-| 2026-04-30 | cuBLAS GFLOPS 计算公式错误 | 分离计算步骤: total_flops / time_sec / 1e9 |
-| 2026-04-30 | ctest 性能阈值过高导致失败 | 降低阈值 1500 → 100 (GPU frequency 变化) |
-| 2026-04-30 | Winograd F6 NonUniformInput 误差超标 | 放宽容差 0.5 → 2.0 (变换值达 3125) |
-| 2026-04-30 | Winograd 输出不匹配 im2col | 修正 A, G, B 变换矩阵 (wincnn 标准) |
-| 2026-04-30 | Winograd 输入变换公式错误 | B^T @ U @ B (修正 B 矩阵使用) |
-| 2026-04-30 | Winograd 输出变换索引错误 | A[:,p]^T @ M @ A[:,q] (p,q 0-based) |
+| 2026-04-30 | ReLU backward mask 问题 | Out-of-place kernel，保存 pre-ReLU 值 ★ |
+| 2026-04-30 | 梯度爆炸导致训练失败 | 梯度裁剪 (max_norm=10.0) ★ |
+| 2026-04-30 | Conv2d cuBLAS backward 正确性 | reshape + sgemm + col2im |
+| 2026-04-30 | Winograd F(6×6) 输出不正确 | wincnn 变换矩阵 |
+| 2026-04-30 | cuBLAS 参数错误 | Row-major vs Column-major 处理 |
 | 2026-04-29 | WSL2 CUDA 检测失败 | LD_PRELOAD nvidia/cuda 库 |
-| 2026-04-29 | ReLU NaN 输入被转为 0 | 改用条件判断保留 NaN |
-| 2026-04-29 | Softmax +Inf 输出 NaN | 特殊处理 +Inf 情况 |
-| 2026-04-29 | MaxPool2d blockDim 问题 | 改为 (1,1)，修复 out_H/out_W 计算 |
-| 2026-04-29 | 测试期望值错误 | 用 PyTorch 验证修正 |
+| 2026-04-29 | ReLU NaN 输入被转为 0 | 条件判断保留 NaN |
 
-## 性能测试输出示例
+## Python 训练测试
 
-```
-========== cuBLAS MatMul Performance ==========
-  cuBLAS MatMul: 7869.4 GFLOPS (21.76 ms)
-=====================================================
+```bash
+# 测试模型正确性
+python3 python/model_cnn_cublas.py
 
-========== Tensor Core Matmul Performance ==========
-  FP32: 1128.03 GFLOPS (1.90375 ms)
-  FP16+TensorCore: 1211.29 GFLOPS (1.77289 ms)
-  Speedup: 1.07381x
-=====================================================
+# 训练 benchmark
+python3 python/benchmark_cnn_comparison.py
 
-========== Winograd F6 Output ==========
-Winograd F6 output (6x6), expected all 9.0:
-   9.00    9.00    9.00    9.00    9.00    9.00 
-   ...
-[PASS] Winograd matches im2col
-=====================================================
-
-Winograd output: 4.00 6.00 6.00 9.00 
-im2col output:   4.00 6.00 6.00 9.00 
-[PASS] Winograd matches im2col
+# 输出示例
+# CUDA: 6469 samples/s, 88.35% accuracy
+# PyTorch: 8372 samples/s, 97.74% accuracy
+# Speed ratio: 77%
 ```
 
 ## 测试文件索引
 
 | 文件 | 测试数 | 内容 |
 |------|--------|------|
+| test_conv2d_cublas.cpp | 3 | Conv2d cuBLAS forward/backward ★核心 |
 | test_matmul.cpp | 5 | FP32 Tiled MatMul |
-| test_matmul_cublas.cpp | 2 | cuBLAS backend ★NEW |
-| test_fp16_tensor_core.cpp | 4 | FP16/Tensor Core |
-| test_relu.cpp | 5 | ReLU + vectorization |
+| test_matmul_cublas.cpp | 2 | cuBLAS MatMul |
+| test_relu.cpp | 5 | ReLU + out-of-place ★ |
 | test_softmax.cpp | 4 | Warp-level Softmax |
-| test_bias_add.cpp | 6 | Bias broadcasting |
 | test_conv2d.cpp | 6 | Naive + im2col |
 | test_conv2d_winograd.cpp | 2 | Winograd F(2×2) |
-| test_conv2d_winograd_f6.cpp | 4 | Winograd F(6×6) ★NEW |
+| test_conv2d_winograd_f6.cpp | 4 | Winograd F(6×6) |
 | test_conv2d_fused.cpp | 1 | Kernel Fusion |
+| test_fp16_tensor_core.cpp | 4 | FP16/Tensor Core |
 | test_maxpool2d.cpp | 3 | MaxPool2d |
-| test_sigmoid.cpp | 3 | Sigmoid |
-| test_tanh.cpp | 4 | Tanh |
-| test_dropout.cpp | 5 | Dropout |
 | test_cross_entropy.cpp | 3 | CrossEntropy |
-| test_sgd_update.cpp | 2 | SGD |
-| test_flatten.cpp | 3 | Flatten |
 | test_edge_cases.cpp | 9 | 边界场景 |
 
 ---
 
-*文档版本: 1.4.0 - 2026-04-30*
+*文档版本: 2.0.0 - 2026-04-30*
