@@ -68,7 +68,9 @@ TEST_F(MatmulCublasTest, Performance) {
     float elapsed_ms;
     cudaEventElapsedTime(&elapsed_ms, start, stop);
 
-    float gflops = 2.0f * M * N * K * 10 / (elapsed_ms * 1e-3) / 1e9;
+    float time_sec = elapsed_ms * 1e-3f;  // Convert to seconds
+    float total_flops = 2.0f * M * N * K * 10;  // Total operations
+    float gflops = total_flops / time_sec / 1e9f;  // GFLOPS
     printf("cuBLAS MatMul: %.1f GFLOPS (%.2f ms)\n", gflops, elapsed_ms / 10);
 
     // Target: > 1500 GFLOPS
