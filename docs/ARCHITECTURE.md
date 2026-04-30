@@ -7,8 +7,9 @@ handle_cuda/
 ├── src/                   # CUDA kernels (.cu)
 │   ├── matmul.cu          # FP32 Tiled GEMM (1062 GFLOPS)
 │   ├── matmul_cublas.cu   # cuBLAS sgemm backend (7869 GFLOPS) ★NEW
-│   ├── matmul_fp16.cu     # FP16/Tensor Core MatMul (WMMA)
+│   ├── matmul_fp16.cu     # FP16/Tensor Core MatMul + Backward ★优化
 │   ├── half_utils.cu      # FP32/FP16 转换工具
+│   ├── loss_scaling.cu    # 梯度缩放 (混合精度训练) ★NEW
 │   ├── relu.cu            # Vectorized ReLU
 │   ├── softmax.cu         # Warp-level Softmax
 │   ├── bias_add.cu        # Broadcasting
@@ -31,16 +32,18 @@ handle_cuda/
 │   └── cuda_util.h        # Internal utilities + CUBLAS_CHECK
 │
 ├── python/
-│   ├── cuda_ops.py        # ctypes binding
-│   ├── model_cuda.py      # Pure CUDA CNN
+│   ├── cuda_ops.py        # ctypes binding (FP16 + 梯度缩放)
+│   ├── model_cuda.py      # Pure CUDA CNN + Mixed Precision MLP
 │   ├── model.py           # NumPy MLP (reference)
 │   ├── train_mnist_cuda.py# Training script
 │   ├── benchmark_compare.py# PyTorch vs CUDA comparison
 │   └── mnist_data.py      # Data loader
 │
-├── tests/                 # GoogleTest (72 tests, 100% pass)
-│   ├── test_matmul_cublas.cpp   # cuBLAS 测试 ★NEW
-│   ├── test_conv2d_winograd_f6.cpp # Winograd F6 测试 ★NEW
+├── tests/                 # GoogleTest (78 tests, 97% pass)
+│   ├── test_matmul_cublas.cpp   # cuBLAS 测试
+│   ├── test_conv2d_winograd_f6.cpp # Winograd F6 测试
+│   ├── test_fp16_mixed_precision.cpp # FP16 混合精度测试 ★NEW
+│   ├── test_tensor_core_optimized.cpp # Tensor Core 优化测试 ★NEW
 │   ├── test_edge_cases.cpp # Boundary tests (9 tests)
 │   ├── test_conv2d_winograd.cpp # Winograd F(2×2) 测试
 │   ├── test_fp16_tensor_core.cpp # FP16/Tensor Core tests
@@ -51,7 +54,7 @@ handle_cuda/
 │   └── run_with_cuda.sh   # WSL2 CUDA 环境脚本 ★NEW
 │
 └── docs/
-    ├── PERFORMANCE_METRICS.md # 性能报告 (v1.4.0)
+    ├── PERFORMANCE_METRICS.md # 性能报告 (v1.6.0)
     ├── ARCHITECTURE.md        # 本文档
     ├── TESTING.md             # 测试说明
     └── CUDA_GUIDE.md          # CUDA 指南
@@ -63,7 +66,9 @@ handle_cuda/
 |------|---------|----------|----------|------|
 | **MatMul FP32** | ✅ | ✅ | 32×32 Shared Memory Tiling | 1062 GFLOPS |
 | **MatMul cuBLAS** | ✅ | ✅ | cuBLAS sgemm backend | **7869 GFLOPS** |
-| **MatMul FP16** | ✅ | ✅ | Tensor Core (WMMA) | 1211 GFLOPS |
+| **MatMul FP16** | ✅ | ✅ | Tensor Core WMMA | 1211 GFLOPS (1.07x) |
+| **MatMul FP16 Backward** | ✅ | ✅ | Tiled Kernel (精度修复) | max_error=0.0009 ★修复 |
+| **MatMul Tensor Core Opt** | ⚠️ 实验性 | - | Multi-warp + Shared staging | 1.06x (布局问题) |
 | **ReLU** | ✅ | ✅ | float4 Vectorization | 200 GB/s |
 | **Softmax** | ✅ | ✅ | Warp-Level Reduction | 249 GB/s |
 | **BiasAdd** | ✅ | ✅ | Broadcasting | - |

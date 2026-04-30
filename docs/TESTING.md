@@ -20,18 +20,20 @@ ctest --output-on-failure
 export LD_PRELOAD=/usr/lib/wsl/lib/libnvidia-ml.so.1:/usr/lib/wsl/lib/libcuda.so.1
 ctest --output-on-failure
 
-# 运行所有测试 (72 tests)
+# 运行所有测试 (78 tests)
 ctest --output-on-failure
 
 # 运行单个测试
 ./bin/test_matmul
-./bin/test_matmul_cublas      # cuBLAS 后端测试 ★NEW
+./bin/test_matmul_cublas      # cuBLAS 后端测试
 ./bin/test_relu
 ./bin/test_softmax
 ./bin/test_conv2d
 ./bin/test_conv2d_winograd    # Winograd F(2×2) 测试
-./bin/test_conv2d_winograd_f6 # Winograd F(6×6) 测试 ★NEW
+./bin/test_conv2d_winograd_f6 # Winograd F(6×6) 测试
 ./bin/test_fp16_tensor_core   # Tensor Core 测试
+./bin/test_fp16_mixed_precision # FP16 混合精度测试 ★NEW
+./bin/test_tensor_core_optimized # Tensor Core 优化测试 ★NEW
 ./bin/test_conv2d_fused       # Kernel Fusion 测试
 ./bin/test_edge_cases         # 边界测试
 ```
@@ -43,6 +45,8 @@ ctest --output-on-failure
 | MatMul FP32 | ✅ | ✅ | 转置, 大矩阵, 非方阵 | ✅ |
 | MatMul cuBLAS | ✅ | ✅ | 与自实现对比 | ✅ |
 | MatMul FP16 | ✅ | ✅ | FP32/FP16 转换 | ✅ |
+| MatMul FP16 Backward | ✅ | ✅ | 精度验证 | ✅ ★NEW |
+| Tensor Core Opt | ⚠️ 实验性 | - | 正确性问题待修复 | ✅ ★NEW |
 | ReLU | ✅ | ✅ | 全正, 全负, NaN/Inf | ✅ |
 | Softmax | ✅ | ✅ | 和为1, 非负, batch=1, NaN/Inf | ✅ |
 | BiasAdd | ✅ | ✅ | 单行, 大矩阵 | - |
