@@ -15,6 +15,15 @@
         } \
     } while (0)
 
+#define CUBLAS_CHECK(call) \
+    do { \
+        cublasStatus_t err = call; \
+        if (err != CUBLAS_STATUS_SUCCESS) { \
+            fprintf(stderr, "cuBLAS error at %s:%d: %d\n", __FILE__, __LINE__, err); \
+            exit(EXIT_FAILURE); \
+        } \
+    } while (0)
+
 #define ALIGN_UP(x, align) (((x) + (align) - 1) & ~((align) - 1))
 
 struct CudaBuffer {
