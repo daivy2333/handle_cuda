@@ -1,6 +1,7 @@
 set(CUDA_OPS_SOURCES
     ${CMAKE_SOURCE_DIR}/src/matmul.cu
     ${CMAKE_SOURCE_DIR}/src/matmul_fp16.cu
+    ${CMAKE_SOURCE_DIR}/src/matmul_cublas.cu
     ${CMAKE_SOURCE_DIR}/src/half_utils.cu
     ${CMAKE_SOURCE_DIR}/src/relu.cu
     ${CMAKE_SOURCE_DIR}/src/bias_add.cu
@@ -19,7 +20,7 @@ set(CUDA_OPS_SOURCES
 
 add_library(cuda_ops STATIC ${CUDA_OPS_SOURCES})
 target_include_directories(cuda_ops PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(cuda_ops PUBLIC CUDA::cudart)
+target_link_libraries(cuda_ops PUBLIC CUDA::cudart CUDA::cublas)
 
 add_executable(test_matmul test_matmul.cpp)
 target_link_libraries(test_matmul cuda_ops GTest::gtest GTest::gtest_main pthread)
@@ -102,3 +103,8 @@ add_executable(test_conv2d_fused test_conv2d_fused.cpp)
 target_link_libraries(test_conv2d_fused cuda_ops GTest::gtest GTest::gtest_main pthread)
 target_include_directories(test_conv2d_fused PRIVATE ${CMAKE_SOURCE_DIR}/include)
 gtest_discover_tests(test_conv2d_fused)
+
+add_executable(test_matmul_cublas test_matmul_cublas.cpp)
+target_link_libraries(test_matmul_cublas cuda_ops GTest::gtest GTest::gtest_main pthread)
+target_include_directories(test_matmul_cublas PRIVATE ${CMAKE_SOURCE_DIR}/include)
+gtest_discover_tests(test_matmul_cublas)

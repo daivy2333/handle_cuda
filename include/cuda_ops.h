@@ -2,6 +2,7 @@
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
+#include <cublas_v2.h>
 #include <cstddef>
 
 enum class ActivationType { ReLU, Sigmoid, Tanh, Softmax };
@@ -38,6 +39,8 @@ struct Conv2dBackwardBuffers {
 };
 
 void cuda_matmul(const float* A, const float* B, float* C, const MatMulDesc& desc, cudaStream_t stream = 0);
+void cuda_matmul_cublas(const float* A, const float* B, float* C,
+                        size_t M, size_t N, size_t K, cudaStream_t stream = 0);
 void cuda_matmul_backward(const float* grad_C, const float* A, const float* B,
                           float* grad_A, float* grad_B,
                           const MatMulDesc& desc, cudaStream_t stream = 0);
