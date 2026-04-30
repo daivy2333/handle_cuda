@@ -138,6 +138,16 @@ void cuda_softmax_backward_f32(const float* grad_out, const float* forward_outpu
 }
 
 // ============== Conv2d C API ==============
+// Winograd F(4x4, 3x3) conv2d forward
+void cuda_conv2d_winograd_f32(const float* input, const float* weight, const float* bias,
+                              float* output, float* temp_buffer,
+                              int N, int C, int H, int W, int out_C,
+                              int stride_h, int stride_w, int pad_h, int pad_w) {
+    cuda_conv2d_winograd_forward(input, weight, bias, output, temp_buffer,
+                                 N, C, H, W, out_C,
+                                 stride_h, stride_w, pad_h, pad_w, 0);
+}
+
 // Conv2d forward: input [N, C, H, W], weight [out_C, C, kernel_h, kernel_w], output [N, out_C, out_H, out_W]
 void cuda_conv2d_f32(const float* input, const float* weight, const float* bias, float* output,
                      int N, int C, int H, int W,
@@ -162,6 +172,32 @@ void cuda_conv2d_f32(const float* input, const float* weight, const float* bias,
     desc.out_W = (W + 2 * pad_w - kernel_w) / stride_w + 1;
 
     cuda_conv2d(input, weight, bias, output, desc, 0);
+}
+
+// Conv2d im2col: im2col + GEMM approach (much faster than naive)
+void cuda_conv2d_im2col_f32(const float* input, const float* weight, const float* bias,
+                             float* output, float* col_buffer, float* gemm_buffer,
+                             int N, int C, int H, int W,
+                             int out_C, int kernel_h, int kernel_w,
+                             int stride_h, int stride_w, int pad_h, int pad_w) {
+    Conv2dDesc desc;
+    desc.N = N;
+    desc.C = C;
+    desc.H = H;
+    desc.W = W;
+    desc.out_C = out_C;
+    desc.kernel_h = kernel_h;
+    desc.kernel_w = kernel_w;
+    desc.stride_h = stride_h;
+    desc.stride_w = stride_w;
+    desc.pad_h = pad_h;
+    desc.pad_w = pad_w;
+    desc.groups = 1;
+
+    desc.out_H = (H + 2 * pad_h - kernel_h) / stride_h + 1;
+    desc.out_W = (W + 2 * pad_w - kernel_w) / stride_w + 1;
+
+    cuda_conv2d_im2col(input, weight, bias, output, col_buffer, gemm_buffer, desc, 0);
 }
 
 // Conv2d backward: compute grad_input, grad_weight, grad_bias

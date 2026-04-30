@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <cstddef>
 
 enum class ActivationType { ReLU, Sigmoid, Tanh, Softmax };
@@ -81,6 +82,47 @@ void cuda_conv2d_backward_with_buffers(const float* grad_out, const float* input
 // Calculate buffer sizes for conv2d backward
 size_t cuda_conv2d_backward_buffer_sizes(const Conv2dDesc& desc,
                                           size_t* reshaped_size, size_t* col_size);
+
+// Winograd F(4×4, 3×3) conv2d forward - 2-3x faster for 3x3 conv
+void cuda_conv2d_winograd_forward(
+    const float* input, const float* weight, const float* bias,
+    float* output, float* temp_buffer,
+    int N, int C, int H, int W, int out_C,
+    int stride_h, int stride_w, int pad_h, int pad_w,
+    cudaStream_t stream = 0);
+
+// Fused Conv2d + ReLU kernel (reduces memory bandwidth)
+void cuda_conv2d_relu_fused(
+    const float* input, const float* weight, const float* bias,
+    float* output,
+    int N, int C, int H, int W, int out_C,
+    int stride_h, int stride_w, int pad_h, int pad_w,
+    cudaStream_t stream = 0);
+
+// Fused Conv2d + ReLU + MaxPool2d kernel
+void cuda_conv2d_relu_pool_fused(
+    const float* input, const float* weight, const float* bias,
+    float* output, int* max_indices,
+    int N, int C, int H, int W, int out_C,
+    int stride_h, int stride_w, int pad_h, int pad_w,
+    cudaStream_t stream = 0);
+
+// FP16/Tensor Core matmul (requires compute capability 7.0+)
+void cuda_matmul_fp16(
+    const __half* A, const __half* B, float* C,
+    int M, int N, int K, cudaStream_t stream = 0);
+
+void cuda_matmul_fp32_baseline(
+    const float* A, const float* B, float* C,
+    int M, int N, int K, cudaStream_t stream = 0);
+
+void cuda_matmul_fp16_naive(
+    const __half* A, const __half* B, float* C,
+    int M, int N, int K, cudaStream_t stream = 0);
+
+// FP16 conversion utilities
+void float_to_half(const float* in, __half* out, size_t n, cudaStream_t stream = 0);
+void half_to_float(const __half* in, float* out, size_t n, cudaStream_t stream = 0);
 
 void cuda_maxpool2d(const float* input, float* output, int* indices,
                    const Pool2dDesc& desc, cudaStream_t stream = 0);
