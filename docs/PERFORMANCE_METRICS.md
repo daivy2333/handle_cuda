@@ -306,19 +306,23 @@
 | FP16/Tensor Core MatMul (Forward) | ✅ 完成 | 1.07x 加速 |
 | FP16 混合精度训练框架 | ✅ 完成 | Python bindings + 模型类 |
 | Kernel Fusion (Conv→ReLU) | ✅ 完成 | 正确实现 |
+| FP16 Backward Tiled Kernel | ✅ 完成 | 精度稳定 (max_error=0.0009) |
+| Tensor Core 深度优化 (实验性) | ⚠️ 部分完成 | 1.06x (WMMA 布局问题待修复) |
 
 ### Phase2 已知问题
 
 | 问题 | 状态 | 说明 |
 |------|------|------|
-| FP16 Matmul Backward 精度问题 | ✅ 已修复 | Naive kernel 精度控制更好 |
+| FP16 Matmul Backward 精度问题 | ✅ 已修复 | Tiled kernel 精度控制正确 |
+| Tensor Core WMMA shared memory 布局 | ⚠️ 待修复 | load_matrix_sync 布局不兼容 |
+| Python 内存管理问题 | ⚠️ 待修复 | 预分配缓存解决长时间运行问题 |
 
 ### Phase2 待完成优化
 
 | 优先级 | 优化 | 预期收益 | 复杂度 | 状态 |
 |--------|------|----------|--------|------|
-| **高** | Tensor Core 深度优化 | 4-8x | 高 | ⏳ 待实现 |
-| **高** | FP16 Backward Kernel 性能优化 | 2-3x | 中 | ⏳ 待实现 |
+| **高** | Tensor Core WMMA 布局修复 | 4-8x | 高 | ⚠️ 实验性版本已有 |
+| **高** | Python 预分配缓存 | 稳定长时间训练 | 中 | ⏳ 待实现 |
 | **中** | Conv→BN→ReLU→Pool 融合 | 1.5-2x | 中 | ⏳ 待实现 |
 | **低** | CUDA Graphs | 1.2-1.5x | 中 | 未计划 |
 
@@ -427,6 +431,7 @@ scripts/
 | 1.4.0 | 2026-04-30 | **cuBLAS sgemm 后端 (7869 GFLOPS)**，Winograd F(6×6)，72测试通过 |
 | 1.5.0 | 2026-04-30 | FP16 混合精度框架，梯度缩放，Python bindings，76测试通过 |
 | 1.5.1 | 2026-04-30 | **FP16 Backward 精度修复**，Naive kernel 稳定训练，75测试通过 |
+| 1.6.0 | 2026-04-30 | **FP16 Backward Tiled Kernel 精度修复**，Tensor Core 优化(实验性)，78测试 |
 
 ---
 
